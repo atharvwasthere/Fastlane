@@ -15,13 +15,10 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "Fastlane",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "Fastlane ▸ Benchmark your bandwidth. Beautifully.",
+	Long: ` Get blazing fast network performance insights from your command line.
+ It's built for speed and simplicity, helping you quickly measure ping latency, download, upload, and advanced network diagnostics with ease.`,
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
