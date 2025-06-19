@@ -12,5 +12,12 @@
     "port": 443,
     "location": "Mountain View",
     "country": "US"
+  },
+    {
+    "name": "OVH Paris",
+    "host": "proof.ovh.net",
+    "port": 80,
+    "location": "Paris",
+    "country": "FR"
   }
 ]
