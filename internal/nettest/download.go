@@ -9,18 +9,13 @@ import (
 	"time"
 
 	"github.com/atharvwasthere/Fastlane/internal/ui"
+	"github.com/atharvwasthere/Fastlane/internal/types"
+	
 )
-type DownloadResult struct {
-	BytesTransferred int64         `json:"bytes_transferred"`
-	Duration         time.Duration `json:"duration"`
-	SpeedMbps        float64       `json:"speed_mbps"`
-	Server           string        `json:"server"`
-	Success          bool          `json:"success"`
-	Error            string        `json:"error,omitempty"`
-}
 
-func Download(ctx context.Context , server string ,verbose bool, printer *ui.Printer) (*DownloadResult ,error) {
-	result := &DownloadResult{Server: server , Success: true}
+
+func Download(ctx context.Context , server string ,verbose bool, printer *ui.Printer) (*types.DownloadResult ,error) {
+	result := &types.DownloadResult{Server: server , Success: true}
 	const downloadSize = 20 * 1024 *1024 // 20MB
 
 	// TCP Donwload
@@ -71,8 +66,8 @@ func Download(ctx context.Context , server string ,verbose bool, printer *ui.Pri
 
 }
 
-func httpDownload(ctx context.Context , server string, verbose bool , printer *ui.Printer , downloadSize int64 )(*DownloadResult , error){
-	result := &DownloadResult{Server: server , Success: true }
+func httpDownload(ctx context.Context , server string, verbose bool , printer *ui.Printer , downloadSize int64 )(*types.DownloadResult , error){
+	result := &types.DownloadResult{Server: server , Success: true }
 	client := &http.Client{}
 	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/10Mb.dat", server), nil) 
 	if err != nil {

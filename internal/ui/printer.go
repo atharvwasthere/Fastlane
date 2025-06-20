@@ -7,7 +7,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/schollz/progressbar/v3"
-	"github.com/atharvwasthere/Fastlane/internal/nettest"
+	"github.com/atharvwasthere/Fastlane/internal/types"
 	"github.com/atharvwasthere/Fastlane/internal/utils"
 )
 
@@ -47,7 +47,7 @@ func (p *Printer) StopSpinner() {
 	}
 }
 
-func (p *Printer) PrintLatencyBreakdown(result *nettest.PingResult) {
+func (p *Printer) PrintLatencyBreakdown(result *types.PingResult) {
 	green := color.New(color.FgGreen).SprintFunc()
 	fmt.Printf("%s Latency Analysis:\n", green("▶"))
 	fmt.Printf("  → DNS Resolution:     %s\n", utils.FormatDuration(result.DNSResolution))
@@ -57,7 +57,7 @@ func (p *Printer) PrintLatencyBreakdown(result *nettest.PingResult) {
 	fmt.Printf("  → Total Ping RTT:     %s\n", utils.FormatDuration(result.TotalRTT))
 }
 
-func (p *Printer) PrintDownloadResult(result *nettest.DownloadResult) {
+func (p *Printer) PrintDownloadResult(result *types.DownloadResult) {
 	green := color.New(color.FgGreen).SprintFunc()
 	fmt.Printf("%s DOWNLOAD:\n", green("▶"))
 	fmt.Printf("  → %.1f MB in %s\n", float64(result.BytesTransferred)/(1024*1024), utils.FormatDuration(result.Duration))

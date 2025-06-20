@@ -41,12 +41,13 @@ func testping(cmd *cobra.Command, args []string) error {
 
 		// 2. Initialize UI
 		printer := ui.NewPrinter(pingVerbose)
-		serverInfo := fmt.Sprintf("Target Server: %s (%s, %s)", targetServer, selector.GetServer(targetServer).Location, selector.GetServer(targetServer).Country)
-		printer.PrintBox("FASTLANE NETWORK BENCHMARK", serverInfo, time.Now().Format(time.RFC3339))
+		// serverInfo := fmt.Sprintf("Target Server: %s (%s, %s)", targetServer, selector.GetServer(targetServer).Location, selector.GetServer(targetServer).Country)
+		printer.PrintBox("FASTLANE NETWORK BENCHMARK")
+		printer.PrintDetails(targetServer,selector.GetServer(targetServer).Location, selector.GetServer(targetServer).Country , time.Now().Format(time.RFC3339))
 
 		// 3. Run ping test
-		printer.PrintSpinner("Testing latency...")
-		
+		printer.StartSpinner("PING","Testing latency...")
+	
 		result, err := nettest.Ping(ctx, targetServer, pingVerbose)
 		if err != nil {
 			printer.PrintError(fmt.Sprintf("Ping failed: %v", err))

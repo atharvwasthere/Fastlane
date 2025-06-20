@@ -7,23 +7,16 @@ import (
 	"net"
 	"net/http"
 	"time"
+	"github.com/atharvwasthere/Fastlane/internal/types"
+
 )
 
-type PingResult struct {
-	DNSResolution time.Duration `json:"dns_resolution"`  // Time to resolve hostname
-	TCPHandshake  time.Duration `json:"tcp_handshake"`   // Time for TCP 3-way handshake
-	TLSSetup      time.Duration `json:"tls_setup"`       // Time for TLS negotiation
-	TTFB          time.Duration `json:"ttfb"`            // Time to first byte of HTTP response
-	TotalRTT      time.Duration `json:"total_rtt"`       // Sum of components
-	Server        string        `json:"server"`          // Target server hostname
-	Success       bool          `json:"success"`         // Whether the test completed fully
-	Error         string        `json:"error,omitempty"` // Error message if failed
-}
 
-func Ping(ctx context.Context, server string, verbose bool) (*PingResult, error) {
+
+func Ping(ctx context.Context, server string, verbose bool) (*types.PingResult, error) {
 	// using a ptr so as to apply direct changes to returning result
 	// pre defining the values
-	result := &PingResult{Server: server, Success: true}
+	result := &types.PingResult{Server: server, Success: true}
 
 	// 1. DNS Resolution
 	start := time.Now()
