@@ -16,11 +16,11 @@ import (
 
 func Download(ctx context.Context , server string ,verbose bool, printer *ui.Printer) (*types.DownloadResult ,error) {
 	result := &types.DownloadResult{Server: server , Success: true}
-	const downloadSize = 10 * 1024 *1024 // 20MB
+	const downloadSize = 2 * 1024 *1024 // 2 MB
 
 	// TCP Donwload
 	start := time.Now()
-	conn, err := net.DialTimeout("tcp", net.JoinHostPort(server,"443"),3*time.Second)
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(server,"443"),25*time.Second)
 	if err != nil { 
 		// Fallback to HTTP
 		return httpDownload(ctx, server, verbose ,printer ,downloadSize)

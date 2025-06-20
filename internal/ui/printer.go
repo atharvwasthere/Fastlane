@@ -29,13 +29,27 @@ func (p *Printer) PrintBox(header string) {
 }
 
 func (p *Printer) PrintDetails(server, location, country, timestamp string) {
-	fmt.Printf("▶ Target Server: %s (%s, %s)\n", server, location, country)
-	fmt.Printf("▶ Timestamp: %s\n", timestamp)
+	cyan := color.New(color.FgCyan).SprintFunc()
+	fmt.Printf("%s Target Server: %s (%s, %s)\n", cyan("▶"), server, location, country)
+	fmt.Printf("%s Timestamp: %s\n", cyan("▶"), timestamp)
 }
 
 func (p *Printer) StartSpinner(command, message string) {
+	// Use unboxed spinner with emoji and colored pointer
+	var emoji string
+	switch command {
+	case "PING":
+		emoji = "📶"
+	case "DOWNLOAD":
+		emoji = "⬇️"
+	case "UPLOAD":
+		emoji = "⬆️"
+	default:
+		emoji = "🚀"
+	}
 	p.spinner = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	p.spinner.Prefix = fmt.Sprintf("▶ %s: %s ", command, message)
+	cyan := color.New(color.FgCyan).SprintFunc()
+	p.spinner.Prefix = fmt.Sprintf("%s %s %s: %s ", cyan("▶"), emoji, command, message)
 	p.spinner.Start()
 }
 
@@ -60,6 +74,13 @@ func (p *Printer) PrintLatencyBreakdown(result *types.PingResult) {
 func (p *Printer) PrintDownloadResult(result *types.DownloadResult) {
 	green := color.New(color.FgGreen).SprintFunc()
 	fmt.Printf("%s DOWNLOAD:\n", green("▶"))
+	fmt.Printf("  → %.1f MB in %s\n", float64(result.BytesTransferred)/(1024*1024), utils.FormatDuration(result.Duration))
+	fmt.Printf("  → Speed: %.1f Mbps\n", result.SpeedMbps)
+}
+
+func (p *Printer) PrintUploadResult(result *types.UploadResult) {
+	green := color.New(color.FgGreen).SprintFunc()
+	fmt.Printf("%s UPLOAD:\n", green("▶"))
 	fmt.Printf("  → %.1f MB in %s\n", float64(result.BytesTransferred)/(1024*1024), utils.FormatDuration(result.Duration))
 	fmt.Printf("  → Speed: %.1f Mbps\n", result.SpeedMbps)
 }

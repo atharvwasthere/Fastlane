@@ -21,3 +21,12 @@ type PingResult struct {
 	Success       bool          `json:"success"`         // Whether the test completed fully
 	Error         string        `json:"error,omitempty"` // Error message if failed
 }
+
+type UploadResult struct {
+    BytesTransferred int64         `json:"bytes_transferred_upload"`
+    Duration         time.Duration `json:"duration"`
+    SpeedMbps        float64       `json:"speed_mbps"`
+    Server           string        `json:"server"`
+    Success          bool          `json:"success"`
+    Error            string        `json:"error,omitempty"`
+}
