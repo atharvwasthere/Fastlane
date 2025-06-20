@@ -16,7 +16,7 @@ import (
 
 func Download(ctx context.Context , server string ,verbose bool, printer *ui.Printer) (*types.DownloadResult ,error) {
 	result := &types.DownloadResult{Server: server , Success: true}
-	const downloadSize = 20 * 1024 *1024 // 20MB
+	const downloadSize = 10 * 1024 *1024 // 20MB
 
 	// TCP Donwload
 	start := time.Now()
@@ -32,6 +32,7 @@ func Download(ctx context.Context , server string ,verbose bool, printer *ui.Pri
 	// not saving this data just measuring how fast it arrives
 	var totalBytes int64
 	progress := printer.StartProgressBar(downloadSize, "Downloading")
+	outer:
 	for totalBytes < downloadSize {
 		select {
 		case <-ctx.Done():
@@ -53,7 +54,7 @@ func Download(ctx context.Context , server string ,verbose bool, printer *ui.Pri
 				fmt.Printf("Read %d bytes, total: %d\n", n, totalBytes)
 			}
 			if err == io.EOF {
-				break
+				break outer
 			}
 		}
 	}
@@ -61,7 +62,11 @@ func Download(ctx context.Context , server string ,verbose bool, printer *ui.Pri
 
 	result.BytesTransferred = totalBytes
 	result.Duration = time.Since(start)
-	result.SpeedMbps = float64(totalBytes*8) / (1024 * 1024) / result.Duration.Seconds()
+	speedMbps := float64(totalBytes*8) / (1024 * 1024) / result.Duration.Seconds()
+	if speedMbps < 1 {
+		printer.PrintError("Your connection is too slow for accurate benchmarking. Try a better network.")
+	}
+	result.SpeedMbps = speedMbps
 	return result, nil
 
 }
@@ -88,6 +93,7 @@ func httpDownload(ctx context.Context , server string, verbose bool , printer *u
 	progress := printer.StartProgressBar(downloadSize , "Downloading (HTTP)")
 	buf := make([]byte, 32*1024)
 	var totalBytes int64
+	outer:
 	for totalBytes < downloadSize {
 		select {
 		case <- ctx.Done():
@@ -107,7 +113,7 @@ func httpDownload(ctx context.Context , server string, verbose bool , printer *u
 				fmt.Printf("Read %d bytes,total: %d\n", n, totalBytes)
 			}
 			if err == io.EOF {
-				break
+				break outer
 			}
 		}
 	}
