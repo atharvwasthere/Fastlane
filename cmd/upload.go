@@ -25,7 +25,7 @@ var  (
 // uploadCmd represents the upload command
 var uploadCmd = &cobra.Command{
 	Use:   "upload",
-	Short: "Run an upload speed test",
+	Short: "Test your upload speed.",
 	Long: `Runs an upload speed test using TCP sockets with HTTP fallback, measuring bandwidth and speed.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return uploadTest(cmd, args)

@@ -13,7 +13,7 @@ import (
 // xrayCmd represents the xray command
 var xrayCmd = &cobra.Command{
 	Use:   "xray",
-	Short: "A brief description of your command",
+	Short: "Displays internals like threads used, chunk size, TCP window.",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

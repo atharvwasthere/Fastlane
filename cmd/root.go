@@ -1,16 +1,14 @@
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"os"
-	
+
+	"github.com/atharvwasthere/Fastlane/internal/ui"
 	"github.com/spf13/cobra"
 )
-
-
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -18,7 +16,12 @@ var rootCmd = &cobra.Command{
 	Short: "Fastlane ▸ Benchmark your bandwidth. Beautifully.",
 	Long: ` Get blazing fast network performance insights from your command line.
  It's built for speed and simplicity, helping you quickly measure ping latency, download, upload, and advanced network diagnostics with ease.`,
-
+	Run: func(cmd *cobra.Command, args []string) {
+		ui := ui.NewPrinter(false) // or pass verbose as needed
+		ui.PrintLogo()
+		ui.PrintTaglineBox()
+		ui.PrintHelpSectionInline()
+	},
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -43,6 +46,20 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	rootCmd.SetHelpTemplate(`
+Fastlane ▸ Benchmark your bandwidth. Beautifully.
+
+Usage:
+  {{.UseLine}}
+
+Available Commands:
+{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name 10}} {{.Short}}{{end}}{{end}}
+
+Flags:
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}
+
+Use "{{.CommandPath}} [command] --help" for more information about a command.
+`)
 }
-
-

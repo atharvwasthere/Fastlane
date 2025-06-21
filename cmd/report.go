@@ -13,7 +13,7 @@ import (
 // reportCmd represents the report command
 var reportCmd = &cobra.Command{
 	Use:   "report",
-	Short: "A brief description of your command",
+	Short: "Lists and displays saved historical test reports.",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

@@ -23,7 +23,7 @@ var (
 // downloadCmd represents the download command
 var downloadCmd = &cobra.Command{
 	Use:   "download",
-	Short: "Run a download speed test",
+	Short: "Get a summary of your test results.",
 	Long: `Runs a download speed test using TCP sockets with HTTP fallback, measuring bandwidth and speed.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := runDownload(cmd, args) 
