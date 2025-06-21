@@ -4,12 +4,21 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/briandowns/spinner"
-	"github.com/fatih/color"
-	"github.com/schollz/progressbar/v3"
 	"github.com/atharvwasthere/Fastlane/internal/types"
 	"github.com/atharvwasthere/Fastlane/internal/utils"
+	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
+	"github.com/mattn/go-runewidth"
+	"github.com/schollz/progressbar/v3"
 )
+
+func stringRepeat(s string, count int) string {
+	result := ""
+	for i := 0; i < count; i++ {
+		result += s
+	}
+	return result
+}
 
 type Printer struct {
 	verbose bool
@@ -20,6 +29,124 @@ type Printer struct {
 func NewPrinter(verbose bool) *Printer {
 	return &Printer{verbose: verbose}
 }
+
+func (p *Printer) PrintLogo() {
+	logo := []string{
+		"                                                                   ",
+		"███████╗ █████╗ ███████╗████████╗██╗      █████╗ ███╗   ██╗███████╗",
+		"██╔════╝██╔══██╗██╔════╝╚══██╔══╝██║     ██╔══██╗████╗  ██║██╔════╝",
+		"█████╗  ███████║███████╗   ██║   ██║     ███████║██╔██╗ ██║█████╗  ",
+		"██╔══╝  ██╔══██║╚════██║   ██║   ██║     ██╔══██║██║╚██╗██║██╔══╝  ",
+		"██║     ██║  ██║███████║   ██║   ███████╗██║  ██║██║ ╚████║███████╗",
+		"╚═╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝",
+		"                                                                   ",
+	}
+	for _, line := range logo {
+		fmt.Println(line)
+	}
+}
+func (p *Printer) PrintLogoBorder() {
+	logo := []string{
+		"                                                                     ",
+		"╔───────────────────────────────────────────────────────────────────╗",
+		"│███████╗ █████╗ ███████╗████████╗██╗      █████╗ ███╗   ██╗███████╗│",
+		"│██╔════╝██╔══██╗██╔════╝╚══██╔══╝██║     ██╔══██╗████╗  ██║██╔════╝│",
+		"│█████╗  ███████║███████╗   ██║   ██║     ███████║██╔██╗ ██║█████╗  │",
+		"│██╔══╝  ██╔══██║╚════██║   ██║   ██║     ██╔══██║██║╚██╗██║██╔══╝  │",
+		"│██║     ██║  ██║███████║   ██║   ███████╗██║  ██║██║ ╚████║███████╗│",
+		"│╚═╝     ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝│",
+		"╚───────────────────────────────────────────────────────────────────╝",
+		"                                                                     ",
+	}
+	for _, line := range logo {
+		fmt.Println(line)
+	}
+}
+
+/* 
+
+
+*/
+func (p *Printer) PrintVersion() {
+	logo := []string{
+	"              ___   ____     ____ ",
+	"       _   __<  /  / __ \\   / __ \\",
+	"      | | / // /  / / / /  / / / /",
+	"      | |/ // /_ / /_/ /_ / /_/ / ",
+	"      |___//_/(_)\u005c____/(_)\u005c____/  ",
+	"                                            ",
+	"                                            ",
+	}
+	for _, line := range logo {
+		fmt.Println(line)
+	}
+}
+
+
+func (p *Printer) PrintVersionTaglineBox() {
+	cyan := color.New(color.FgHiMagenta).SprintFunc()
+	tagline := "Built for developers who hate lag."
+
+	width := runewidth.StringWidth(tagline)
+	total := width + 4
+
+	top := "╔" + stringRepeat("═", total-2) + "╗"
+	bottom := "╚" + stringRepeat("═", total-2) + "╝"
+
+	fmt.Println(cyan(top))
+	fmt.Printf("%s %s %s\n", cyan("║"), tagline, cyan("║"))
+	fmt.Println(cyan(bottom))
+}
+
+func (p *Printer) PrintTaglineBox() {
+	cyan := color.New(color.FgHiMagenta).SprintFunc()
+	tagline := "Fastlane ▸ Benchmark your bandwidth. Beautifully."
+
+	width := runewidth.StringWidth(tagline)
+	total := width + 4
+
+	top := "╔" + stringRepeat("═", total-2) + "╗"
+	bottom := "╚" + stringRepeat("═", total-2) + "╝"
+
+	fmt.Println(cyan(top))
+	fmt.Printf("%s %s %s\n", cyan("║"), tagline, cyan("║"))
+	fmt.Println(cyan(bottom))
+}
+
+
+func (p *Printer) PrintHelpSectionInline() {
+	command := color.New(color.FgHiCyan).SprintFunc()     // For command names
+	flag := color.New(color.FgHiYellow).SprintFunc()      // For flags
+	section := color.New(color.FgHiMagenta).SprintFunc()  // For section titles
+
+	fmt.Println()
+	fmt.Println(section("Usage:"))
+	fmt.Printf("  %s [command]\n", command("Fastlane"))
+	fmt.Println()
+
+	fmt.Println(section("Available Commands:"))
+	fmt.Printf("  %s    %s\n", command("completion"), "Generate the autocompletion script for the specified shell")
+	fmt.Printf("  %s       %s\n", command("download"), "Run a download speed test")
+	fmt.Printf("  %s           %s\n", command("full"), "Run a full network test (ping + download + upload)")
+	fmt.Printf("  %s          %s\n", command("help"), "Help about any command")
+	fmt.Printf("  %s           %s\n", command("live"), "Continuously monitor your network in real-time")
+	fmt.Printf("  %s           %s\n", command("ping"), "Measure latency to the nearest server")
+	fmt.Printf("  %s         %s\n", command("report"), "Generate a test summary report")
+	fmt.Printf("  %s          %s\n", command("upload"), "Run an upload speed test")
+	fmt.Printf("  %s            %s\n", command("xray"), "Deep-dive into your network diagnostics")
+	fmt.Println()
+
+	fmt.Println(section("Flags:"))
+	fmt.Printf("  %s     %s\n", flag("-h, --help"), "help for Fastlane")
+	fmt.Printf("  %s  %s\n", flag("-t, --toggle"), "Help message for toggle")
+	fmt.Println()
+
+	fmt.Printf("Use \"%s [command] %s\" for more information about a command.\n",
+		command("Fastlane"), flag("--help"))
+}
+
+
+
 
 func (p *Printer) PrintBox(header string) {
 	cyan := color.New(color.FgCyan).SprintFunc()
@@ -35,7 +162,6 @@ func (p *Printer) PrintDetails(server, location, country, timestamp string) {
 }
 
 func (p *Printer) StartSpinner(command, message string) {
-	// Use unboxed spinner with emoji and colored pointer
 	var emoji string
 	switch command {
 	case "PING":
@@ -57,7 +183,7 @@ func (p *Printer) StopSpinner() {
 	if p.spinner != nil {
 		p.spinner.Stop()
 		p.spinner = nil
-		fmt.Printf("\033[1A\033[K") // Clear the spinner line
+		fmt.Printf("\033[1A\033[K")
 	}
 }
 
@@ -83,6 +209,12 @@ func (p *Printer) PrintUploadResult(result *types.UploadResult) {
 	fmt.Printf("%s UPLOAD:\n", green("▶"))
 	fmt.Printf("  → %.1f MB in %s\n", float64(result.BytesTransferred)/(1024*1024), utils.FormatDuration(result.Duration))
 	fmt.Printf("  → Speed: %.1f Mbps\n", result.SpeedMbps)
+}
+
+func (p *Printer) PrintFullResult(result *types.FullResult) {
+	p.PrintLatencyBreakdown(result.Ping)
+	p.PrintDownloadResult(result.Download)
+	p.PrintUploadResult(result.Upload)
 }
 
 func (p *Printer) PrintError(message string) {
