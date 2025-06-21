@@ -30,3 +30,9 @@ type UploadResult struct {
     Success          bool          `json:"success"`
     Error            string        `json:"error,omitempty"`
 }
+
+type FullResult struct {
+	Ping     *PingResult     `json:"ping"`
+	Download *DownloadResult `json:"download"`
+	Upload   *UploadResult   `json:"upload"`
+}
