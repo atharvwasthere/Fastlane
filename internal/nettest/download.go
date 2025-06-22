@@ -16,7 +16,7 @@ import (
 
 func Download(ctx context.Context , server string ,verbose bool, printer *ui.Printer) (*types.DownloadResult ,error) {
 	result := &types.DownloadResult{Server: server , Success: true}
-	const downloadSize = 2 * 1024 *1024 // 2 MB
+	const downloadSize = 1 * 1024 *1024 // 2 MB
 
 	// TCP Donwload
 	start := time.Now()
@@ -28,7 +28,7 @@ func Download(ctx context.Context , server string ,verbose bool, printer *ui.Pri
 	defer conn.Close()
 
 	//Read data with progress
-	buf := make([]byte, 32*1024) // 32 KB buffer
+	buf := make([]byte, 64*1024) // 32 KB buffer
 	// not saving this data just measuring how fast it arrives
 	var totalBytes int64
 	progress := printer.StartProgressBar(downloadSize, "Downloading")
@@ -64,6 +64,7 @@ func Download(ctx context.Context , server string ,verbose bool, printer *ui.Pri
 	result.Duration = time.Since(start)
 	speedMbps := float64(totalBytes*8) / (1024 * 1024) / result.Duration.Seconds()
 	if speedMbps < 1 {
+		printer.ClearProgressBar()
 		printer.PrintError("Your connection is too slow for accurate benchmarking. Try a better network.")
 	}
 	result.SpeedMbps = speedMbps

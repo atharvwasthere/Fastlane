@@ -1,5 +1,26 @@
 [
   {
+    "name": "Cloudflare Mumbai",
+    "host": "speed.cloudflare.com",
+    "port": 443,
+    "location": "Mumbai",
+    "country": "INDIA"
+  },
+  {
+    "name": "Vultr Mumbai",
+    "host": "mumbai.vultr.speedtest.net",
+    "port": 443,
+    "location": "Mumbai",
+    "country": "IN"
+  },
+  {
+    "name": "ACT Fibernet Chennai",
+    "host": "speedtest.actcorp.in",
+    "port": 443,
+    "location": "Chennai",
+    "country": "IN"
+  },
+  {
     "name": "Hetzner Frankfurt",
     "host": "speedtest.hetzner.de",
     "port": 443,
@@ -13,7 +34,7 @@
     "location": "Mountain View",
     "country": "US"
   },
-    {
+  {
     "name": "OVH Paris",
     "host": "proof.ovh.net",
     "port": 80,

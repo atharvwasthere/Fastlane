@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/atharvwasthere/Fastlane/internal/types"
@@ -70,7 +71,7 @@ func (p *Printer) PrintLogoBorder() {
 func (p *Printer) PrintVersion() {
 	logo := []string{
 	"              ___   ____     ____ ",
-	"       _   __<  /  / __ \\   / __ \\",
+	"       _   __/  /  / __ \\   / __ \\",
 	"      | | / // /  / / / /  / / / /",
 	"      | |/ // /_ / /_/ /_ / /_/ / ",
 	"      |___//_/(_)\u005c____/(_)\u005c____/  ",
@@ -229,11 +230,45 @@ func (p *Printer) PrintBoxFooter(message string) {
 	fmt.Printf("└────────────────────────────────────────────┘\n")
 }
 
+func getEmojiFromDescription(desc string) string {
+	desc = strings.ToLower(desc)
+	switch {
+	case strings.Contains(desc,"download"):
+		return "⬇️"
+	
+	case strings.Contains(desc,"upload"):
+	   return "⬆️"
+	default:
+		return "🚀"   
+	}
+}
+
 func (p *Printer) StartProgressBar(max int64, description string) *progressbar.ProgressBar {
-	p.bar = progressbar.DefaultBytes(max, description)
+	
+	emoji := getEmojiFromDescription(description)
+	bar := progressbar.NewOptions64(
+		max,
+		progressbar.OptionSetDescription( emoji + " " + description),
+		progressbar.OptionShowBytes(true),
+		progressbar.OptionSetWidth(40),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "=",
+			SaucerHead:    ">",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+	)
+	p.bar = bar
 	return p.bar
 }
 
+func (p *Printer) ClearProgressBar() {
+	if p.bar != nil {
+		_ = p.bar.Clear()
+		p.bar = nil 
+	}
+}
 func (p *Printer) FinishProgressBar() {
 	if p.bar != nil {
 		p.bar.Finish()

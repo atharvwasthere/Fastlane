@@ -26,7 +26,7 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
-	rootCmd.PersistentFlags().BoolP("version", "v", false, "Show version info")
+	rootCmd.PersistentFlags().BoolP("version", "V", false, "Show version info")
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if v, _ := cmd.Flags().GetBool("version"); v {
