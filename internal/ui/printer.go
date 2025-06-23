@@ -218,6 +218,12 @@ func (p *Printer) PrintFullResult(result *types.FullResult) {
 	p.PrintUploadResult(result.Upload)
 }
 
+func (p *Printer) PrintReportSaved(filepath string) {
+	green := color.New(color.FgGreen).SprintFunc()
+	fmt.Printf("%s Report saved at %s\n", green("✔"), filepath)
+}
+
+
 func (p *Printer) PrintError(message string) {
 	red := color.New(color.FgRed).SprintFunc()
 	fmt.Printf("%s Error: %s\n", red("❌"), message)

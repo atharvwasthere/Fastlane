@@ -22,6 +22,7 @@ func init() {
 	pingCmd.Flags().StringVar(&pingServer, "server", "", "Target server host (e.g., google.com)")
 	pingCmd.Flags().BoolVarP(&pingVerbose, "verbose", "v", false, "Verbose output")
 	pingCmd.Flags().BoolVar(&pingJSON, "json", false, "Output result as JSON")
+	pingCmd.Flags().BoolVar(&saveReport, "save-report", true, "Save report to JSON file")
 	rootCmd.AddCommand(pingCmd)
 }
 
@@ -54,6 +55,17 @@ func testping(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		printer.StopSpinner()
+
+		// 3.1 Save report
+		if saveReport {
+			filepath, err := utils.SaveReport(result, targetServer)
+			if err != nil {
+				printer.PrintError(fmt.Sprintf("Failed to save report: %v", err))
+				return err
+			}
+			printer.PrintReportSaved(filepath)
+		}
+
 
 		// 4. Output results
 		if pingJSON {

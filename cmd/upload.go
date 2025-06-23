@@ -63,6 +63,15 @@ func uploadTest(cmd *cobra.Command, args []string) error {
 	printer.StopSpinner()
 	printer.FinishProgressBar()
 
+	if saveReport {
+		filepath, err := utils.SaveReport(result, targetServer)
+			if err != nil {
+				printer.PrintError(fmt.Sprintf("Failed to save report: %v", err))
+				return err
+			}
+			printer.PrintReportSaved(filepath)
+		}
+
 	// Output results
 	if uploadJSON {
 		jsonOut, err := utils.ToJSON(result)
@@ -84,6 +93,7 @@ func init() {
 	uploadCmd.Flags().StringVar(&uploadServer, "server", "", "Target server host (e.g., speedtest.hetzner.de)")
 	uploadCmd.Flags().BoolVarP(&uploadVerbose, "verbose", "v", false, "Verbose ouput")
 	uploadCmd.Flags().BoolVar(&uploadVerbose, "json", false, "Output result as JSON")
+	uploadCmd.Flags().BoolVar(&saveReport, "save-report", true, "Save report to JSON file")
 	
 	rootCmd.AddCommand(uploadCmd)
 

@@ -70,6 +70,15 @@ func runDownload(cmd *cobra.Command, args []string) error {
 
 	printer.FinishProgressBar()
 
+	if saveReport {
+		filepath, err := utils.SaveReport(result, targetServer)
+			if err != nil {
+				printer.PrintError(fmt.Sprintf("Failed to save report: %v", err))
+				return err
+			}
+			printer.PrintReportSaved(filepath)
+	}
+
 	// Output results
 	if downloadJSON {
 		jsonOut, err := utils.ToJSON(result)
@@ -89,6 +98,7 @@ func init() {
 	downloadCmd.Flags().StringVar(&downloadServer, "server", "", "Target server host (e.g., speedtest.hetzner.de)")
 	downloadCmd.Flags().BoolVarP(&downloadVerbose, "verbose", "v", false, "Verbose output")
 	downloadCmd.Flags().BoolVar(&downloadJSON, "json", false, "Output result as JSON")
+	downloadCmd.Flags().BoolVar(&saveReport, "save-report", true, "Save report to JSON file")
 	rootCmd.AddCommand(downloadCmd)
 	// Here you will define your flags and configuration settings.
 

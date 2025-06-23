@@ -103,6 +103,15 @@ func fullTest(cmd *cobra.Command, args []string) error {
 		printer.PrintUploadResult(uploadResult)
 		fullResult.Upload = uploadResult
 
+		if saveReport {
+			filepath, err := utils.SaveReport(fullResult, targetServer)
+			if err != nil {
+				printer.PrintError(fmt.Sprintf("Failed to save report: %v", err))
+				return err
+			}
+			printer.PrintReportSaved(filepath)
+		}
+
 		// Output results
 		if fullJSON {
 			jsonOut, err := utils.ToJSON(fullResult)
@@ -122,7 +131,7 @@ func init() {
 	fullCmd.Flags().StringVar(&fullServer, "server", "", "Target server host (e.g., speedtest.hetzner.de)")
 	fullCmd.Flags().BoolVarP(&fullVerbose, "verbose", "v", false, "Verbose output")
 	fullCmd.Flags().BoolVar(&fullJSON, "json", false, "Output result as JSON")
-
+	fullCmd.Flags().BoolVar(&saveReport, "save-report", true, "Save report to JSON file")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command

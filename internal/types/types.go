@@ -36,3 +36,9 @@ type FullResult struct {
 	Download *DownloadResult `json:"download"`
 	Upload   *UploadResult   `json:"upload"`
 }
+
+type Report struct {
+	Timestamp string      `json:"timestamp"`
+	Server    string      `json:"server"`
+	Results   interface{} `json:"results"`
+}
