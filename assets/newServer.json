@@ -1,0 +1,2422 @@
+[
+    {
+        "name": "Arthatel Curug",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R"
+        ],
+        "country": "ID",
+        "location": "Curug",
+        "continent": "Asia",
+        "provider": "Arthatel",
+        "bandwidth": "1"
+    },
+    {
+        "name": "Cloudity Viana do Castelo",
+        "host": "5201-5205",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "PT",
+        "location": "Viana do Castelo",
+        "continent": "Europe",
+        "provider": "Cloudity",
+        "bandwidth": "10"
+    },
+    {
+        "name": "DATAPACKET Accra",
+        "host": "102.214.66.19",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "GN",
+        "location": "Accra",
+        "continent": "Africa",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Accra",
+        "host": "102.214.66.39",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "GN",
+        "location": "Accra",
+        "continent": "Africa",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "SNT Jakarta",
+        "host": "5201-5230",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "ID",
+        "location": "Jakarta",
+        "continent": "Asia",
+        "provider": "SNT",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Guineanet Bata",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "GQ",
+        "location": "Bata",
+        "continent": "Africa",
+        "provider": "Guineanet",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "DATAPACKET Boston",
+        "host": "109.61.86.65",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Boston",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Lisbon",
+        "host": "109.61.94.65",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "PT",
+        "location": "Lisbon",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Quer\u00e9taro",
+        "host": "121.127.43.65",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "MX",
+        "location": "Quer\u00e9taro",
+        "continent": "Latin America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Copenhagen",
+        "host": "121.127.45.65",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "DK",
+        "location": "Copenhagen",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Marseille",
+        "host": "138.199.14.66",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "FR",
+        "location": "Marseille",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET S\u00e3o Paulo",
+        "host": "138.199.4.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "BR",
+        "location": "S\u00e3o Paulo",
+        "continent": "Latin America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Toronto",
+        "host": "138.199.57.129",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CA",
+        "location": "Toronto",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Sydney",
+        "host": "143.244.63.144",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "AU",
+        "location": "Sydney",
+        "continent": "Oceania",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "Movistar Bogot\u00e1",
+        "host": "55200-55300",
+        "port": 55200,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CO",
+        "location": "Bogot\u00e1",
+        "continent": "Latin America",
+        "provider": "Movistar",
+        "bandwidth": "10"
+    },
+    {
+        "name": "DATAPACKET Port Moresby",
+        "host": "154.81.51.4",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "PG",
+        "location": "Port Moresby",
+        "continent": "Oceania",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Bratislava",
+        "host": "156.146.40.65",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "SK",
+        "location": "Bratislava",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Istanbul",
+        "host": "156.146.52.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "TR",
+        "location": "Istanbul",
+        "continent": "Asia",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET San Jose",
+        "host": "156.146.53.53",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CR",
+        "location": "San Jose",
+        "continent": "Latin America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Tel Aviv",
+        "host": "169.150.202.193",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "IL",
+        "location": "Tel Aviv",
+        "continent": "Asia",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Bogot\u00e1",
+        "host": "169.150.228.129",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CO",
+        "location": "Bogot\u00e1",
+        "continent": "Latin America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Johannesburg",
+        "host": "169.150.238.161",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "ZA",
+        "location": "Johannesburg",
+        "continent": "Africa",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Zagreb",
+        "host": "169.150.242.129",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "HR",
+        "location": "Zagreb",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Athens",
+        "host": "169.150.252.2",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "GR",
+        "location": "Athens",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "5201-5209 Cartago",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CO",
+        "location": "Cartago",
+        "continent": "Latin America",
+        "provider": "Unknown",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Eseven Frankfurt",
+        "host": "9204-9240",
+        "port": 9204,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "DE",
+        "location": "Frankfurt",
+        "continent": "Europe",
+        "provider": "Eseven",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "DATAPACKET Bucharest",
+        "host": "185.102.217.170",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "RO",
+        "location": "Bucharest",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Amsterdam",
+        "host": "185.102.218.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Frankfurt",
+        "host": "185.102.219.93",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "DE",
+        "location": "Frankfurt",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Prague",
+        "host": "185.152.65.113",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CZ",
+        "location": "Prague",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Atlanta",
+        "host": "185.152.66.67",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Atlanta",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Los Angeles",
+        "host": "185.152.67.2",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Los Angeles",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Vienna",
+        "host": "185.180.12.40",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "AT",
+        "location": "Vienna",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Warsaw",
+        "host": "185.246.208.67",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "PL",
+        "location": "Warsaw",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET London",
+        "host": "185.59.221.51",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "GB",
+        "location": "London",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET New York",
+        "host": "185.59.223.8",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "New York",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Stockholm",
+        "host": "185.76.9.135",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "SE",
+        "location": "Stockholm",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Chicago",
+        "host": "185.93.1.65",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Chicago",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Paris",
+        "host": "185.93.2.193",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "FR",
+        "location": "Paris",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Madrid",
+        "host": "5201",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "ES",
+        "location": "Madrid",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Miami",
+        "host": "195.181.162.195",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Miami",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "Orange.tn Tunis",
+        "host": "9200-9210",
+        "port": 9200,
+        "options": [
+            "-u"
+        ],
+        "country": "TN",
+        "location": "Tunis",
+        "continent": "Africa",
+        "provider": "Orange.tn",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "DATAPACKET Brussels",
+        "host": "207.211.214.65",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "BE",
+        "location": "Brussels",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Cairo",
+        "host": "213.158.175.240",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "EG",
+        "location": "Cairo",
+        "continent": "Africa",
+        "provider": "DATAPACKET",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Aruba.it Ponte San Pietro",
+        "host": "217.61.40.96",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "IT",
+        "location": "Ponte San Pietro",
+        "continent": "Europe",
+        "provider": "Aruba.it",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "DATAPACKET Sofia",
+        "host": "37.19.203.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "BG",
+        "location": "Sofia",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Ashburn",
+        "host": "37.19.206.20",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Ashburn",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Houston",
+        "host": "37.19.216.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Houston",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Kyiv",
+        "host": "37.19.218.65",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "UA",
+        "location": "Kyiv",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Algiers",
+        "host": "5201",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "DZ",
+        "location": "Algiers",
+        "continent": "Africa",
+        "provider": "DATAPACKET",
+        "bandwidth": "10"
+    },
+    {
+        "name": "DATAPACKET Kampala",
+        "host": "41.210.185.162",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "UG",
+        "location": "Kampala",
+        "continent": "Africa",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "Topnet Tunis",
+        "host": "9202-9240",
+        "port": 9202,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "TN",
+        "location": "Tunis",
+        "continent": "Africa",
+        "provider": "Topnet",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "ATC Bengaluru",
+        "host": "49.205.75.2",
+        "port": 5001,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "IN",
+        "location": "Bengaluru",
+        "continent": "Asia",
+        "provider": "ATC",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "DATAPACKET Santiago",
+        "host": "79.127.209.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CL",
+        "location": "Santiago",
+        "continent": "Latin America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Seattle",
+        "host": "84.17.41.11",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "US",
+        "location": "Seattle",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Hong Kong",
+        "host": "84.17.57.129",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "HK",
+        "location": "Hong Kong",
+        "continent": "Asia",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Milan",
+        "host": "84.17.59.129",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "IT",
+        "location": "Milan",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "SledovaniTV Hrdlo\u0159ezy",
+        "host": "85.163.71.241",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CZ",
+        "location": "Hrdlo\u0159ezy",
+        "continent": "Europe",
+        "provider": "SledovaniTV",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "7004-7013 Dubai",
+        "host": "7004-7013",
+        "port": 7004,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "AE",
+        "location": "Dubai",
+        "continent": "Asia",
+        "provider": "Unknown",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "DATAPACKET Dublin",
+        "host": "87.249.137.8",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "IR",
+        "location": "Dublin",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Tokyo",
+        "host": "89.187.160.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "JP",
+        "location": "Tokyo",
+        "continent": "Asia",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Singapore",
+        "host": "89.187.162.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "SG",
+        "location": "Singapore",
+        "continent": "Asia",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Dallas",
+        "host": "89.187.164.1",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "US",
+        "location": "Dallas",
+        "continent": "North America",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "DATAPACKET Z\u00fcrich",
+        "host": "89.187.165.1",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CH",
+        "location": "Z\u00fcrich",
+        "continent": "Europe",
+        "provider": "DATAPACKET",
+        "bandwidth": "2x10"
+    },
+    {
+        "name": "WOBCOM Berlin",
+        "host": "a110.speedtest.wobcom.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "DE",
+        "location": "Berlin",
+        "continent": "Europe",
+        "provider": "WOBCOM",
+        "bandwidth": "2x25"
+    },
+    {
+        "name": "WOBCOM Amsterdam",
+        "host": "a204.speedtest.wobcom.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "WOBCOM",
+        "bandwidth": "2x25"
+    },
+    {
+        "name": "WOBCOM Frankfurt",
+        "host": "a205.speedtest.wobcom.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "DE",
+        "location": "Frankfurt",
+        "continent": "Europe",
+        "provider": "WOBCOM",
+        "bandwidth": "2x25"
+    },
+    {
+        "name": "WOBCOM D\u00fcsseldorf",
+        "host": "a208.speedtest.wobcom.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "DE",
+        "location": "D\u00fcsseldorf",
+        "continent": "Europe",
+        "provider": "WOBCOM",
+        "bandwidth": "2x25"
+    },
+    {
+        "name": "WOBCOM Berlin",
+        "host": "a209.speedtest.wobcom.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "DE",
+        "location": "Berlin",
+        "continent": "Europe",
+        "provider": "WOBCOM",
+        "bandwidth": "2x25"
+    },
+    {
+        "name": "WOBCOM Frankfurt",
+        "host": "a210.speedtest.wobcom.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "DE",
+        "location": "Frankfurt",
+        "continent": "Europe",
+        "provider": "WOBCOM",
+        "bandwidth": "2x25"
+    },
+    {
+        "name": "WOBCOM Wolfsburg",
+        "host": "a400.speedtest.wobcom.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "DE",
+        "location": "Wolfsburg",
+        "continent": "Europe",
+        "provider": "WOBCOM",
+        "bandwidth": "2x25"
+    },
+    {
+        "name": "2Degrees Auckland",
+        "host": "5300-5309",
+        "port": 5300,
+        "options": [
+            "-R"
+        ],
+        "country": "NZ",
+        "location": "Auckland",
+        "continent": "Oceania",
+        "provider": "2Degrees",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Clouvider Amsterdam",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "Clouvider",
+        "bandwidth": "10"
+    },
+    {
+        "name": "goco Montr\u00e9al",
+        "host": "9200-9240",
+        "port": 9200,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CA",
+        "location": "Montr\u00e9al",
+        "continent": "North America",
+        "provider": "goco",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Clouvider Ashburn",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Ashburn",
+        "continent": "North America",
+        "provider": "Clouvider",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Clouvider Atlanta",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Atlanta",
+        "continent": "North America",
+        "provider": "Clouvider",
+        "bandwidth": "10"
+    },
+    {
+        "name": "OVH Beauharnois",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "CA",
+        "location": "Beauharnois",
+        "continent": "North America",
+        "provider": "OVH",
+        "bandwidth": "10"
+    },
+    {
+        "name": "2Degrees Christchurch",
+        "host": "5300-5309",
+        "port": 5300,
+        "options": [
+            "-R"
+        ],
+        "country": "NZ",
+        "location": "Christchurch",
+        "continent": "Oceania",
+        "provider": "2Degrees",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Clouvider Dallas",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Dallas",
+        "continent": "North America",
+        "provider": "Clouvider",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Clouvider Frankfurt",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "DE",
+        "location": "Frankfurt",
+        "continent": "Europe",
+        "provider": "Clouvider",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Eranium Amsterdam",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "Eranium",
+        "bandwidth": "100"
+    },
+    {
+        "name": "Angola Cables Luanda",
+        "host": "9200-9240",
+        "port": 9200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "AO",
+        "location": "Luanda",
+        "continent": "Africa",
+        "provider": "Angola Cables",
+        "bandwidth": "10"
+    },
+    {
+        "name": "UK Servers London",
+        "host": "5300-5400",
+        "port": 5300,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "GB",
+        "location": "London",
+        "continent": "Europe",
+        "provider": "UK Servers",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Scaleway Paris",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "FR",
+        "location": "Paris",
+        "continent": "Europe",
+        "provider": "Scaleway",
+        "bandwidth": "100"
+    },
+    {
+        "name": "Volia Unknown",
+        "host": "5201",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "UA",
+        "location": "Unknown",
+        "continent": "Europe",
+        "provider": "Volia",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Worldstream Naaldwijk",
+        "host": "iperf.worldstream.nl",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "NL",
+        "location": "Naaldwijk",
+        "continent": "Europe",
+        "provider": "Worldstream",
+        "bandwidth": "10"
+    },
+    {
+        "name": "moji Paris",
+        "host": "5200-5240",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "FR",
+        "location": "Paris",
+        "continent": "Europe",
+        "provider": "moji",
+        "bandwidth": "100"
+    },
+    {
+        "name": "Aruba.it Arezzo",
+        "host": "it1.speedtest.aruba.it",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "IT",
+        "location": "Arezzo",
+        "continent": "Europe",
+        "provider": "Aruba.it",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Clouvider Los Angeles",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Los Angeles",
+        "continent": "North America",
+        "provider": "Clouvider",
+        "bandwidth": "10"
+    },
+    {
+        "name": "TerraHost Amsterdam",
+        "host": "9206-9240",
+        "port": 9206,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "TerraHost",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Gigahost Sandefjord",
+        "host": "9201-9240",
+        "port": 9201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "NO",
+        "location": "Sandefjord",
+        "continent": "Europe",
+        "provider": "Gigahost",
+        "bandwidth": "100"
+    },
+    {
+        "name": "Terrahost Sandefjord",
+        "host": "9200-9240",
+        "port": 9200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "NO",
+        "location": "Sandefjord",
+        "continent": "Europe",
+        "provider": "Terrahost",
+        "bandwidth": "10"
+    },
+    {
+        "name": "alwyzon Vienna",
+        "host": "5202-5203",
+        "port": 5202,
+        "options": [
+            "-R"
+        ],
+        "country": "AT",
+        "location": "Vienna",
+        "continent": "Europe",
+        "provider": "alwyzon",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "NOS Lisbon",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "PT",
+        "location": "Lisbon",
+        "continent": "Europe",
+        "provider": "NOS",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Cloudvider London",
+        "host": "5200-5208",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "GB",
+        "location": "London",
+        "continent": "Europe",
+        "provider": "Cloudvider",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Clouvider New York City",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "New York City",
+        "continent": "North America",
+        "provider": "Clouvider",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Scaleway Paris",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "FR",
+        "location": "Paris",
+        "continent": "Europe",
+        "provider": "Scaleway",
+        "bandwidth": "100"
+    },
+    {
+        "name": "Scaleway Amsterdam",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "Scaleway",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Scaleway Vitry-sur-Seine",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "FR",
+        "location": "Vitry-sur-Seine",
+        "continent": "Europe",
+        "provider": "Scaleway",
+        "bandwidth": "100"
+    },
+    {
+        "name": "Scaleway Paris",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "FR",
+        "location": "Paris",
+        "continent": "Europe",
+        "provider": "Scaleway",
+        "bandwidth": "100"
+    },
+    {
+        "name": "Scaleway Paris",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "FR",
+        "location": "Paris",
+        "continent": "Europe",
+        "provider": "Scaleway",
+        "bandwidth": "100"
+    },
+    {
+        "name": "NOS Porto",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "PT",
+        "location": "Porto",
+        "continent": "Europe",
+        "provider": "NOS",
+        "bandwidth": "10"
+    },
+    {
+        "name": "PODA Mikulov",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "CZ",
+        "location": "Mikulov",
+        "continent": "Europe",
+        "provider": "PODA",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "OVH Strasbourg",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "FR",
+        "location": "Strasbourg",
+        "continent": "Europe",
+        "provider": "OVH",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Scaleway Vitry-sur-Seine",
+        "host": "9200-9240",
+        "port": 9200,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "FR",
+        "location": "Vitry-sur-Seine",
+        "continent": "Europe",
+        "provider": "Scaleway",
+        "bandwidth": "10"
+    },
+    {
+        "name": "OVH Singapore",
+        "host": "5204-5209",
+        "port": 5204,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "SG",
+        "location": "Singapore",
+        "continent": "Asia",
+        "provider": "OVH",
+        "bandwidth": "1"
+    },
+    {
+        "name": "HOSTKEY Frankfurt",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "DE",
+        "location": "Frankfurt",
+        "continent": "Europe",
+        "provider": "HOSTKEY",
+        "bandwidth": "10"
+    },
+    {
+        "name": "HOSTKEY Helsinki",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "FI",
+        "location": "Helsinki",
+        "continent": "Europe",
+        "provider": "HOSTKEY",
+        "bandwidth": "10"
+    },
+    {
+        "name": "HOSTKEY Reykjavik",
+        "host": "5201",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "IS",
+        "location": "Reykjavik",
+        "continent": "Europe",
+        "provider": "HOSTKEY",
+        "bandwidth": "10"
+    },
+    {
+        "name": "HOSTKEY New York",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "US",
+        "location": "New York",
+        "continent": "North America",
+        "provider": "HOSTKEY",
+        "bandwidth": "10"
+    },
+    {
+        "name": "IT GATE Gerbido",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "IT",
+        "location": "Gerbido",
+        "continent": "Europe",
+        "provider": "IT GATE",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Netfiber Jerusalem",
+        "host": "speed.netfiber.net.il",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "IL",
+        "location": "Jerusalem",
+        "continent": "Asia",
+        "provider": "Netfiber",
+        "bandwidth": "1"
+    },
+    {
+        "name": "Rimon Jerusalem",
+        "host": "speed.rimon.net.il",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "IL",
+        "location": "Jerusalem",
+        "continent": "Asia",
+        "provider": "Rimon",
+        "bandwidth": "1"
+    },
+    {
+        "name": "intelly Olsztyn",
+        "host": "5206-5207",
+        "port": 5206,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "PL",
+        "location": "Olsztyn",
+        "continent": "Europe",
+        "provider": "intelly",
+        "bandwidth": "1"
+    },
+    {
+        "name": "Fiberby Copenhagen",
+        "host": "9201-9240",
+        "port": 9201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "DK",
+        "location": "Copenhagen",
+        "continent": "Europe",
+        "provider": "Fiberby",
+        "bandwidth": "25"
+    },
+    {
+        "name": "Fiberby Copenhagen",
+        "host": "9201-9240",
+        "port": 9201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "DK",
+        "location": "Copenhagen",
+        "continent": "Europe",
+        "provider": "Fiberby",
+        "bandwidth": "25"
+    },
+    {
+        "name": "Mythic Beasts London",
+        "host": "5201-5205",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "GB",
+        "location": "London",
+        "continent": "Europe",
+        "provider": "Mythic Beasts",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb Amsterdam",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Novogara Amsterdam",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "Novogara",
+        "bandwidth": "20"
+    },
+    {
+        "name": "LeaseWeb Amsterdam",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb Chicago",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "US",
+        "location": "Chicago",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "CityHost Stockholm",
+        "host": "5201-5206",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "SE",
+        "location": "Stockholm",
+        "continent": "Europe",
+        "provider": "CityHost",
+        "bandwidth": "100"
+    },
+    {
+        "name": "LeaseWeb Dallas",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "US",
+        "location": "Dallas",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb Frankfurt",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "DE",
+        "location": "Frankfurt",
+        "continent": "Europe",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Hiper Copenhagen",
+        "host": "5201-5205",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "DK",
+        "location": "Copenhagen",
+        "continent": "Europe",
+        "provider": "Hiper",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "LeaseWeb Hong Kong",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "HK",
+        "location": "Hong Kong",
+        "continent": "Asia",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Init7 Winterthur",
+        "host": "speedtest.init7.net",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "CH",
+        "location": "Winterthur",
+        "continent": "Europe",
+        "provider": "Init7",
+        "bandwidth": "20"
+    },
+    {
+        "name": "IP Projects Frankfurt",
+        "host": "speedtest.ip-projects.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "DE",
+        "location": "Frankfurt",
+        "continent": "Europe",
+        "provider": "IP Projects",
+        "bandwidth": "10"
+    },
+    {
+        "name": "InterServer Secaucus",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Secaucus",
+        "continent": "North America",
+        "provider": "InterServer",
+        "bandwidth": "40"
+    },
+    {
+        "name": "iWay Z\u00fcrich",
+        "host": "speedtest.iway.ch",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "CH",
+        "location": "Z\u00fcrich",
+        "continent": "Europe",
+        "provider": "iWay",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Kamel Networks Kista",
+        "host": "5201-5205",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "SE",
+        "location": "Kista",
+        "continent": "Europe",
+        "provider": "Kamel Networks",
+        "bandwidth": "1"
+    },
+    {
+        "name": "KeFF VPS Stockholm",
+        "host": "9201-9240",
+        "port": 9201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "SE",
+        "location": "Stockholm",
+        "continent": "Europe",
+        "provider": "KeFF VPS",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "LeaseWeb Los Angeles",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "US",
+        "location": "Los Angeles",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb London",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "GB",
+        "location": "London",
+        "continent": "Europe",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb London",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "GB",
+        "location": "London",
+        "continent": "Europe",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "BuyVM Bissen",
+        "host": "speedtest.lu.buyvm.net",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "LU",
+        "location": "Bissen",
+        "continent": "Europe",
+        "provider": "BuyVM",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "M\u00e1sNet Santa Ana",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "EC",
+        "location": "Santa Ana",
+        "continent": "Latin America",
+        "provider": "M\u00e1sNet",
+        "bandwidth": "1"
+    },
+    {
+        "name": "LeaseWeb Miami",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "US",
+        "location": "Miami",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb Montreal",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "CA",
+        "location": "Montreal",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "MyRepublic Jakarta",
+        "host": "9200-9240",
+        "port": 9200,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "ID",
+        "location": "Jakarta",
+        "continent": "Asia",
+        "provider": "MyRepublic",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Mirhosting Amsterdam",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "NL",
+        "location": "Amsterdam",
+        "continent": "Europe",
+        "provider": "Mirhosting",
+        "bandwidth": "40"
+    },
+    {
+        "name": "novus Vancouver",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CA",
+        "location": "Vancouver",
+        "continent": "North America",
+        "provider": "novus",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb New York City",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "US",
+        "location": "New York City",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Ownit Stockholm",
+        "host": "speedtest.ownit.se",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "SE",
+        "location": "Stockholm",
+        "continent": "Europe",
+        "provider": "Ownit",
+        "bandwidth": "1"
+    },
+    {
+        "name": "LeaseWeb Phoenix",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "US",
+        "location": "Phoenix",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "as47787.net S\u00e3o Paulo",
+        "host": "9206-9240",
+        "port": 9206,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "BR",
+        "location": "S\u00e3o Paulo",
+        "continent": "Latin America",
+        "provider": "as47787.net",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "LeaseWeb Seattle",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "US",
+        "location": "Seattle",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb San Francisco",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "US",
+        "location": "San Francisco",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Sasag Schaffhausen",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "CH",
+        "location": "Schaffhausen",
+        "continent": "Europe",
+        "provider": "Sasag",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb Singapore",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "SG",
+        "location": "Singapore",
+        "continent": "Asia",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Singnet Singapore",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R"
+        ],
+        "country": "SG",
+        "location": "Singapore",
+        "continent": "Asia",
+        "provider": "Singnet",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "LeaseWeb Sydney",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "AU",
+        "location": "Sydney",
+        "continent": "Oceania",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Telecable CR San Jos\u00e9",
+        "host": "9201-9240",
+        "port": 9201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "CR",
+        "location": "San Jos\u00e9",
+        "continent": "Latin America",
+        "provider": "Telecable CR",
+        "bandwidth": "1"
+    },
+    {
+        "name": "Mauritius Telecom Port Louis",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "MU",
+        "location": "Port Louis",
+        "continent": "Africa",
+        "provider": "Mauritius Telecom",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "LeaseWeb Tokyo",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "JP",
+        "location": "Tokyo",
+        "continent": "Asia",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "UZ Telecom Tashkent",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "UZ",
+        "location": "Tashkent",
+        "continent": "Asia",
+        "provider": "UZ Telecom",
+        "bandwidth": "10"
+    },
+    {
+        "name": "LeaseWeb Washington",
+        "host": "5201-5210",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "US",
+        "location": "Washington",
+        "continent": "North America",
+        "provider": "LeaseWeb",
+        "bandwidth": "10"
+    },
+    {
+        "name": "WOBCOM Wolfsburg",
+        "host": "speedtest.wobcom.de",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6"
+        ],
+        "country": "DE",
+        "location": "Wolfsburg",
+        "continent": "Europe",
+        "provider": "WOBCOM",
+        "bandwidth": "2x25"
+    },
+    {
+        "name": "wilhelm.tel Norderstedt",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "DE",
+        "location": "Norderstedt",
+        "continent": "Europe",
+        "provider": "wilhelm.tel",
+        "bandwidth": "40"
+    },
+    {
+        "name": "wilhelm.tel Norderstedt",
+        "host": "5300-5309",
+        "port": 5300,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "DE",
+        "location": "Norderstedt",
+        "continent": "Europe",
+        "provider": "wilhelm.tel",
+        "bandwidth": "40"
+    },
+    {
+        "name": "CW Panama Col\u00f3n",
+        "host": "5505-5510",
+        "port": 5505,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "PA",
+        "location": "Col\u00f3n",
+        "continent": "Latin America",
+        "provider": "CW Panama",
+        "bandwidth": "1"
+    },
+    {
+        "name": "Flow Portmore",
+        "host": "5505-5520",
+        "port": 5505,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "JM",
+        "location": "Portmore",
+        "continent": "Latin America",
+        "provider": "Flow",
+        "bandwidth": "1"
+    },
+    {
+        "name": "SOX Belgrade",
+        "host": "9201-9240",
+        "port": 9201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "RS",
+        "location": "Belgrade",
+        "continent": "Europe",
+        "provider": "SOX",
+        "bandwidth": "10"
+    },
+    {
+        "name": "Optimum Charleston",
+        "host": "speedtest15.suddenlink.net",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "US",
+        "location": "Charleston",
+        "continent": "North America",
+        "provider": "Optimum",
+        "bandwidth": "10"
+    },
+    {
+        "name": "COMVERGENCE Melbourne",
+        "host": "5200-5209",
+        "port": 5200,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "AU",
+        "location": "Melbourne",
+        "continent": "Oceania",
+        "provider": "COMVERGENCE",
+        "bandwidth": "1"
+    },
+    {
+        "name": "Lightning Fibre London",
+        "host": "4000-4007",
+        "port": 4000,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "GB",
+        "location": "London",
+        "continent": "Europe",
+        "provider": "Lightning Fibre",
+        "bandwidth": "10"
+    },
+    {
+        "name": "ITsjefen Trondheim",
+        "host": "5201-5204",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "NO",
+        "location": "Trondheim",
+        "continent": "Europe",
+        "provider": "ITsjefen",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "CW Panama Panam\u00e1",
+        "host": "5505-5510",
+        "port": 5505,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "PA",
+        "location": "Panam\u00e1",
+        "continent": "Latin America",
+        "provider": "CW Panama",
+        "bandwidth": "1"
+    },
+    {
+        "name": "Mauritius Telecom Floreal",
+        "host": "5201-5209",
+        "port": 5201,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "MU",
+        "location": "Floreal",
+        "continent": "Africa",
+        "provider": "Mauritius Telecom",
+        "bandwidth": "Unknown"
+    },
+    {
+        "name": "Zamix Barra Mansa",
+        "host": "3000-3009",
+        "port": 3000,
+        "options": [
+            "-R",
+            "-u"
+        ],
+        "country": "BR",
+        "location": "Barra Mansa",
+        "continent": "Latin America",
+        "provider": "Zamix",
+        "bandwidth": "1"
+    },
+    {
+        "name": "OVH Sydney",
+        "host": "5207-5210",
+        "port": 5207,
+        "options": [
+            "-R",
+            "-6",
+            "-u"
+        ],
+        "country": "AU",
+        "location": "Sydney",
+        "continent": "Oceania",
+        "provider": "OVH",
+        "bandwidth": "1"
+    }
+]

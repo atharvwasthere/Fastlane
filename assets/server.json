@@ -6,6 +6,13 @@
     "location": "Mumbai",
     "country": "INDIA"
   },
+    {
+    "name": "Jio Mumbai",
+    "host": "speedtest.jio.in",
+    "port": 8080,
+    "location": "Mumbai",
+    "country": "IN"
+  },
   {
     "name": "Vultr Mumbai",
     "host": "mumbai.vultr.speedtest.net",

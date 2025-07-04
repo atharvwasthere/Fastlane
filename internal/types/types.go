@@ -2,6 +2,20 @@ package types
 
 import "time"
 
+type ServerConfig struct {
+    Name      string   `json:"name"`
+    Host      string   `json:"host"`
+    Port      int      `json:"port"`
+    PortRange string   `json:"port_range,omitempty"` // e.g., "5200-5209"
+    Options   []string `json:"options"`
+    Country   string   `json:"country"`
+    Location  string   `json:"location"`
+    Continent string   `json:"continent"`
+    Provider  string   `json:"provider"`
+    Bandwidth string   `json:"bandwidth"`
+}
+
+
 type DownloadResult struct {
 	BytesTransferred int64         `json:"bytes_transferred"`
 	Duration         time.Duration `json:"duration"`
@@ -30,6 +44,44 @@ type UploadResult struct {
     Success          bool          `json:"success"`
     Error            string        `json:"error,omitempty"`
 }
+
+type Iperf3Result struct {
+    Start struct {
+        Connected []struct {
+            RemoteHost string `json:"remote_host"`
+            RemotePort int    `json:"remote_port"`
+        } `json:"connected"`
+    } `json:"start"`
+    Intervals []struct {
+        Sum struct {
+            BitsPerSecond float64 `json:"bits_per_second"`
+        } `json:"sum"`
+    } `json:"intervals"`
+    End struct {
+        SumSent struct {
+            BitsPerSecond float64 `json:"bits_per_second"`
+            Retransmits   int64   `json:"retransmits"`
+            Bytes         int64   `json:"bytes"`
+        } `json:"sum_sent"`
+        SumReceived struct {
+            BitsPerSecond float64 `json:"bits_per_second"`
+            Bytes         int64   `json:"bytes"`
+        } `json:"sum_received"`
+        Sum struct {
+            BitsPerSecond float64 `json:"bits_per_second"`
+            JitterMs      float64 `json:"jitter_ms"`
+            LostPackets   int64   `json:"lost_packets"`
+            Packets       int64   `json:"packets"`
+            LostPercent   float64 `json:"lost_percent"`
+        } `json:"sum"`
+        CPUUtilizationPercent struct {
+            HostTotal   float64 `json:"host_total"`
+            RemoteTotal float64 `json:"remote_total"`
+        } `json:"cpu_utilization_percent"`
+    } `json:"end"`
+    Error string `json:"error"`
+}
+
 
 type FullResult struct {
 	Ping     *PingResult     `json:"ping"`

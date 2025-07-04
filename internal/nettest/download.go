@@ -28,7 +28,7 @@ func Download(ctx context.Context , server string ,verbose bool, printer *ui.Pri
 	defer conn.Close()
 
 	//Read data with progress
-	buf := make([]byte, 64*1024) // 32 KB buffer
+	buf := make([]byte, 1024*1024) // 32 KB buffer
 	// not saving this data just measuring how fast it arrives
 	var totalBytes int64
 	progress := printer.StartProgressBar(downloadSize, "Downloading")

@@ -3,34 +3,30 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"go/types"
 	"os"
+
+	"github.com/atharvwasthere/Fastlane/internal/location"
+	"github.com/atharvwasthere/Fastlane/internal/nettest"
+	"github.com/atharvwasthere/Fastlane/internal/types"
 )
 
-type Server struct {
-	Name     string `json:"name"`
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Location string `json:"location"`
-	Country  string `json:"country"`
-}
-
 type Selector struct {
-	Servers []Server
+	Servers []types.ServerConfig
 }
 
 
 func NewSelector(filepath string) (*Selector, error) {
-	var servers []Server
-	
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read server file: %v", err)
 	}
-	
+
+	var servers []types.ServerConfig
+
 	if err := json.Unmarshal(data, &servers); err != nil {
 		return nil, fmt.Errorf("failed to parse servers JSON: %v" , err) // %v prints the value in its default format 
 	}
-	fmt.Println(servers)
 
 	if len(servers) == 0 {
 		return nil, fmt.Errorf("no servers found in %s" , filepath)
@@ -38,7 +34,8 @@ func NewSelector(filepath string) (*Selector, error) {
 	return &Selector{Servers: servers}, nil
 }
 
-func (s *Selector) SelectDefault() *Server {
+
+func (s *Selector) SelectDefault() (*types.ServerConfig, *types.PingResult , error) {
 	// Placeholder: Return first server (Phase 3 will use GeoIP)
 	return &s.Servers[0]
 }
