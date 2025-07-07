@@ -1,100 +1,145 @@
 package nettest
 
 import (
-	"context"
 	"fmt"
+	"math/rand"
 	"net"
-	"net/http"
-	"strings"
+	"sync"
 	"time"
 
-	"github.com/atharvwasthere/Fastlane/internal/types"
-	"github.com/atharvwasthere/Fastlane/internal/ui"
+	"github.com/atharvwasthere/Fastlane/types"
 )
 
-func Upload(ctx context.Context, server string, verbose bool, printer *ui.Printer) (*types.UploadResult, error) {
-	result := &types.UploadResult{Server: server , Success: true}
-	const uploadSize = 2 * 1024 *1024 // X MB
+// Upload performs an upload speed test to a server over multiple TCP connections.
+func Upload(server *types.Server, uploadThreadCount int) (*types.TestResult, error) {
+	// Configuration
+	const (
+		testDuration = 10 * time.Second // Test runs for 10 seconds
+		chunkSize    = 1024 * 1024     // 1MB chunks
+		timeout      = 5 * time.Second  // Connection timeout
+		writeDeadline = 2 * time.Second // Write deadline per chunk
+	)
 
-	// TCP Upload
-	start := time.Now()
-	conn, err := net.DialTimeout("tcp",net.JoinHostPort(server,"443"), 25*time.Second)
-	if err != nil {
-		// Fallback to HTTP
-		return httpUpload(ctx, server ,verbose , printer, uploadSize)
-
+	// Initialize result
+	result := &types.TestResult{
+		Server:  server.Host,
+		Success: false,
 	}
-	defer conn.Close()
 
-	// Writing data with progress
-	data := strings.Repeat("a",32*1024) // 32KB buffer
+	// Generate random data chunk to avoid server compression
+	dataChunk := make([]byte, chunkSize)
+	rand.Seed(time.Now().UnixNano())
+	rand.Read(dataChunk) // Fill with random bytes
+
+	// Track total bytes sent across all threads
 	var totalBytes int64
-	progress := printer.StartProgressBar(uploadSize, "Uploading")
-	for totalBytes < uploadSize {
-		select {
-		case <-ctx.Done():
-			result.Success = false
-			result.Error ="Upload timed-out"
-			return result, ctx.Err()
-		default:
-			n, err := conn.Write([]byte(data))
-			if err != nil {
-				conn.Close()
-				return httpUpload(ctx,server,verbose,printer,uploadSize)
-			}
-			totalBytes += int64(n)
-			progress.Add64(int64(n))
-			if verbose {
-				fmt.Printf("Wrote %d bytes, total: %d\n", n, totalBytes)
-			}
-		}
-	}
-	progress.Finish()
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var firstError error
+	errorCount := 0
 
-	result.BytesTransferred = totalBytes
-	result.Duration = time.Since(start)
-	speedMbps :=  float64(totalBytes*8) / (1024 * 1024) / result.Duration.Seconds()
-	result.SpeedMbps = speedMbps
-	if speedMbps < 1 {
-		printer.PrintError("Your connection is too slow for accurate benchmarking. Try a better network.")
+	// Start upload threads
+	if uploadThreadCount <= 0 {
+		uploadThreadCount = 4 // Default from ios-config.php
 	}
-	return result, nil
-}
-
-func httpUpload(ctx context.Context, server string , verbose bool , printer *ui.Printer, uploadSize int64) (*types.UploadResult, error) {
-	result := &types.UploadResult{Server: server, Success: true}
-	client := &http.Client{}
-	data := strings.Repeat("a", int(uploadSize))
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("https://%s/post", server), strings.NewReader(data))
-	if err != nil {
-		result.Success = false
-		result.Error = fmt.Sprintf("HTTP request creation failed: %v", err)
-		return result, err
-	}
-
 	start := time.Now()
-	progress := printer.StartProgressBar(uploadSize , "Uploading (HTTP)")
-	resp, err := client.Do(req)
-	if err != nil {
-		result.Success = false
-		result.Error = fmt.Sprintf("HTTP upload failed: %v", err)
-		return result, err
-	}
-	defer resp.Body.Close()
 
-	// Simulating progress (HTTP client does not provide write progress)
-		for i := 0; i < int(uploadSize); i += 32*1024 {
-		progress.Add(32 * 1024)
-		time.Sleep(100 * time.Millisecond) // Simulate upload time
-	}
-	progress.Finish()
+	for i := 0; i < uploadThreadCount; i++ {
+		wg.Add(1)
+		go func(threadID int) {
+			defer wg.Done()
 
-	result.BytesTransferred = uploadSize
-	result.Duration = time.Since(start)
-	speedMbps := float64(uploadSize*8) / (1024 * 1024) / result.Duration.Seconds()
-	result.SpeedMbps = speedMbps
-	if speedMbps < 1 {
-		printer.PrintError("Your connection is too slow for accurate benchmarking. Try a better network.")
+			// Establish TCP connection
+			conn, err := net.DialTimeout("tcp", server.Host, timeout)
+			if err != nil {
+				mu.Lock()
+				if firstError == nil {
+					firstError = fmt.Errorf("thread %d failed to connect to %s: %v", threadID, server.Host, err)
+				}
+				errorCount++
+				mu.Unlock()
+				return
+			}
+			defer conn.Close()
+
+			// Send UPLOAD command
+			if err := conn.SetWriteDeadline(time.Now().Add(writeDeadline)); err != nil {
+				mu.Lock()
+				if firstError == nil {
+					firstError = fmt.Errorf("thread %d failed to set write deadline: %v", threadID, err)
+				}
+				errorCount++
+				mu.Unlock()
+				return
+			}
+			_, err = conn.Write([]byte("UPLOAD\n"))
+			if err != nil {
+				mu.Lock()
+				if firstError == nil {
+					firstError = fmt.Errorf("thread %d failed to send UPLOAD: %v", threadID, err)
+				}
+				errorCount++
+				mu.Unlock()
+				return
+			}
+
+			// Send data chunks until test duration is reached
+			var threadBytes int64
+			for time.Since(start) < testDuration {
+				if err := conn.SetWriteDeadline(time.Now().Add(writeDeadline)); err != nil {
+					mu.Lock()
+					if firstError == nil {
+						firstError = fmt.Errorf("thread %d failed to set write deadline: %v", threadID, err)
+					}
+					errorCount++
+					mu.Unlock()
+					return
+				}
+				_, err = conn.Write(dataChunk)
+				if err != nil {
+					mu.Lock()
+					if firstError == nil {
+						firstError = fmt.Errorf("thread %d failed to send data: %v", threadID, err)
+					}
+					errorCount++
+					mu.Unlock()
+					return
+				}
+				threadBytes += int64(chunkSize)
+			}
+
+			// Update total bytes
+			mu.Lock()
+			totalBytes += threadBytes
+			mu.Unlock()
+		}(i)
+	}
+
+	// Wait for all threads to complete
+	wg.Wait()
+
+	// Check for errors
+	if errorCount == uploadThreadCount {
+		if firstError == nil {
+			firstError = fmt.Errorf("all upload threads failed")
+		}
+		result.Error = firstError.Error()
+		return result, firstError
+	}
+
+	// Calculate speed
+	duration := time.Since(start)
+	if duration == 0 {
+		duration = time.Nanosecond // Avoid division by zero
+	}
+	speedBps := float64(totalBytes) * 8 / duration.Seconds()
+
+	// Populate result
+	result.Success = true
+	result.Metrics = types.Metrics{
+		BytesTransferred: totalBytes,
+		SpeedBps:         speedBps,
+		Duration:         duration,
 	}
 	return result, nil
 }
