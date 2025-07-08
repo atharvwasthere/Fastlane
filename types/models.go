@@ -25,6 +25,14 @@ type ConnectionMetrics struct {
     TotalRTT      time.Duration `json:"total_rtt"`      // Sum of above components
 }
 
+type Metrics struct {
+    TotalRTT        time.Duration // Average round-trip time (for ping)
+    Jitter          time.Duration // Variation in RTT (for ping)
+    BytesTransferred int64        // Bytes sent or received
+    SpeedBps        float64      // Speed in bits per second
+    Duration        time.Duration // Test duration
+}
+
 // BandwidthSample represents a single speed measurement sample.
 type BandwidthSample struct {
     Timestamp       time.Time `json:"timestamp"`        // Time of sample

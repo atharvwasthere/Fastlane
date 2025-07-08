@@ -1,127 +1,120 @@
 package nettest
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
+	"sync"
 	"time"
-
-	"github.com/atharvwasthere/Fastlane/internal/ui"
-	"github.com/atharvwasthere/Fastlane/internal/types"
-	
+	"github.com/atharvwasthere/Fastlane/types"
 )
 
+func Download(server *types.Server, downloadThreadCount int) (*types.TestResult, error) {
+	const (
+		testDuration  = 10 * time.Second
+		chunkSize     = 1024 * 1024
+		timeout       = 5 * time.Second
+		readDeadline  = 2 * time.Second
+	)
 
-func Download(ctx context.Context , server string ,verbose bool, printer *ui.Printer) (*types.DownloadResult ,error) {
-	result := &types.DownloadResult{Server: server , Success: true}
-	const downloadSize = 1 * 1024 *1024 // 2 MB
-
-	// TCP Donwload
-	start := time.Now()
-	conn, err := net.DialTimeout("tcp", net.JoinHostPort(server,"443"),25*time.Second)
-	if err != nil { 
-		// Fallback to HTTP
-		return httpDownload(ctx, server, verbose ,printer ,downloadSize)
-	} 
-	defer conn.Close()
-
-	//Read data with progress
-	buf := make([]byte, 1024*1024) // 32 KB buffer
-	// not saving this data just measuring how fast it arrives
+	result := &types.TestResult{Server: server.Host}
 	var totalBytes int64
-	progress := printer.StartProgressBar(downloadSize, "Downloading")
-	outer:
-	for totalBytes < downloadSize {
-		select {
-		case <-ctx.Done():
-			// Context expired or cancelled
-			result.Success = false
-			result.Error = "download tomed out"
-			return result, ctx.Err()
-		default:
-			// Safe to continue: Context is still active
-			n, err := conn.Read(buf) //streaming test data into memory 
-			if err != nil && err != io.EOF {
-				// Fallback to HTTP
-				conn.Close()
-				return httpDownload(ctx, server, verbose, printer, downloadSize)
-			}
-			totalBytes += int64(n)
-			progress.Add64(int64(n))
-			if verbose {
-				fmt.Printf("Read %d bytes, total: %d\n", n, totalBytes)
-			}
-			if err == io.EOF {
-				break outer
-			}
-		}
-	}
-	progress.Finish()
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var firstError error
+	errorCount := 0
 
-	result.BytesTransferred = totalBytes
-	result.Duration = time.Since(start)
-	speedMbps := float64(totalBytes*8) / (1024 * 1024) / result.Duration.Seconds()
-	if speedMbps < 1 {
-		printer.ClearProgressBar()
-		printer.PrintError("Your connection is too slow for accurate benchmarking. Try a better network.")
+	if downloadThreadCount <= 0 {
+		downloadThreadCount = 4 // Default from ios-config.php
 	}
-	result.SpeedMbps = speedMbps
-	return result, nil
-
-}
-
-func httpDownload(ctx context.Context , server string, verbose bool , printer *ui.Printer , downloadSize int64 )(*types.DownloadResult , error){
-	result := &types.DownloadResult{Server: server , Success: true }
-	client := &http.Client{}
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/10Mb.dat", server), nil) 
-	if err != nil {
-		result.Success = false
-		result.Error = fmt.Sprintf("HTTP request creation failed: %v", err)
-		return result, err
-	}
-		
-	resp, err := client.Do(req)
-	if err != nil {
-		result.Success = false 
-		result.Error = fmt.Sprintf("HTTP download failed: %v", err)
-		return result, err
-	}
-	defer resp.Body.Close()
-
 	start := time.Now()
-	progress := printer.StartProgressBar(downloadSize , "Downloading (HTTP)")
-	buf := make([]byte, 32*1024)
-	var totalBytes int64
-	outer:
-	for totalBytes < downloadSize {
-		select {
-		case <- ctx.Done():
-			result.Success = false;
-			result.Error = "HTTP download timed-out"
-			return result, ctx.Err()
-		default:
-			n, err := resp.Body.Read(buf)
-			if err != nil && err != io.EOF {
-				result.Success = false
-				result.Error = fmt.Sprintf("HTTP read failed: %v", err)
-				return result, err
-			}
-			totalBytes += int64(n)
-			progress.Add64(int64(n))
-			if verbose {
-				fmt.Printf("Read %d bytes,total: %d\n", n, totalBytes)
-			}
-			if err == io.EOF {
-				break outer
-			}
-		}
-	}
-	progress.Finish()
 
-	result.BytesTransferred = totalBytes
-	result.Duration = time.Since(start)
-	result.SpeedMbps = float64(totalBytes*8) / (1024 * 1024) / result.Duration.Seconds()
+	for i := 0; i < downloadThreadCount; i++ {
+		wg.Add(1)
+		go func(threadID int) {
+			defer wg.Done()
+			conn, err := net.DialTimeout("tcp", server.Host, timeout)
+			if err != nil {
+				mu.Lock()
+				if firstError == nil {
+					firstError = fmt.Errorf("thread %d failed to connect: %v", threadID, err)
+				}
+				errorCount++
+				mu.Unlock()
+				return
+			}
+			defer conn.Close()
+
+			if err := conn.SetWriteDeadline(time.Now().Add(readDeadline)); err != nil {
+				mu.Lock()
+				if firstError == nil {
+					firstError = fmt.Errorf("thread %d failed to set write deadline: %v", threadID, err)
+				}
+				errorCount++
+				mu.Unlock()
+				return
+			}
+			_, err = conn.Write([]byte("DOWNLOAD\n"))
+			if err != nil {
+				mu.Lock()
+				if firstError == nil {
+					firstError = fmt.Errorf("thread %d failed to send DOWNLOAD: %v", threadID, err)
+				}
+				errorCount++
+				mu.Unlock()
+				return
+			}
+
+			var threadBytes int64
+			buffer := make([]byte, chunkSize)
+			for time.Since(start) < testDuration {
+				if err := conn.SetReadDeadline(time.Now().Add(readDeadline)); err != nil {
+					mu.Lock()
+					if firstError == nil {
+						firstError = fmt.Errorf("thread %d failed to set read deadline: %v", threadID, err)
+					}
+					errorCount++
+					mu.Unlock()
+					return
+				}
+				n, err := conn.Read(buffer)
+				if err != nil {
+					mu.Lock()
+					if firstError == nil {
+						firstError = fmt.Errorf("thread %d failed to read data: %v", threadID, err)
+					}
+					errorCount++
+					mu.Unlock()
+					return
+				}
+				threadBytes += int64(n)
+			}
+
+			mu.Lock()
+			totalBytes += threadBytes
+			mu.Unlock()
+		}(i)
+	}
+
+	wg.Wait()
+	if errorCount == downloadThreadCount {
+		if firstError == nil {
+			firstError = fmt.Errorf("all download threads failed")
+		}
+		result.Error = firstError.Error()
+		return result, firstError
+	}
+
+	duration := time.Since(start)
+	if duration == 0 {
+		duration = time.Nanosecond
+	}
+	speedBps := float64(totalBytes) * 8 / duration.Seconds()
+
+	result.Success = true
+	result.Metrics = types.Metrics{
+		BytesTransferred: totalBytes,
+		SpeedBps:         speedBps,
+		Duration:         duration,
+	}
 	return result, nil
 }
