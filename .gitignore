@@ -1,4 +1,10 @@
 Fastlane.exe
 Structure.txt 
-
+.claude
+.agents
 assets\GeoLite2-City.mmdb
+
+--DOCS--
+
+.DS_Store
+skills-lock.json
