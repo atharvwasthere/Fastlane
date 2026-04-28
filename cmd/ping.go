@@ -20,20 +20,42 @@ var pingCmd = &cobra.Command{
 	Long:  `Measure network latency with breakdown (DNS, TCP, TLS, HTTP). Supports custom server selection.`,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if globalFlags.JSON {
-			result := output.NewResult("ping", pingFlags.Server)
-			result.Data["latency_ms"] = 45.32
-			result.Data["jitter_ms"] = 2.15
-			result.Data["min_ms"] = 42.0
-			result.Data["max_ms"] = 48.5
-			jsonWriter := output.NewJSONWriter(os.Stdout)
-			jsonWriter.WriteResult(result)
-			return
-		}
-
 		server := pingFlags.Server
 		if server == "" {
-			server = "google.com"
+			if len(args) > 0 {
+				server = args[0]
+			} else {
+				server = "google.com"
+			}
+		}
+
+		timeout := time.Duration(globalFlags.Timeout) * time.Second
+		if timeout == 0 {
+			timeout = 10 * time.Second
+		}
+
+		if globalFlags.JSON {
+			result, err := ping.MeasureLayered(server, 5, timeout)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
+			filter := ping.NewPautaFilter()
+			filtered, _ := filter.Filter(result.Samples)
+
+			jsonResult := output.NewResult("ping", server)
+			jsonResult.Data["latency_ms"] = result.MeanMS
+			jsonResult.Data["jitter_ms"] = result.JitterMS
+			jsonResult.Data["min_ms"] = result.MinMS
+			jsonResult.Data["max_ms"] = result.MaxMS
+			jsonResult.Data["dns_ms"] = result.DNSLatencyMS
+			jsonResult.Data["tcp_ms"] = result.TCPLatencyMS
+			jsonResult.Data["tls_ms"] = result.TLSLatencyMS
+			jsonResult.Data["http_ms"] = result.HTTPLatencyMS
+			jsonResult.Data["samples"] = len(filtered)
+			jsonWriter := output.NewJSONWriter(os.Stdout)
+			jsonWriter.WriteResult(jsonResult)
+			return
 		}
 
 		printer := ui.NewPrinter(globalFlags.Verbose)
@@ -42,18 +64,16 @@ var pingCmd = &cobra.Command{
 
 		printer.PrintBox("FASTLANE NETWORK BENCHMARK")
 		printer.PrintDetails(server, "Remote", "Remote", time.Now().Format(time.RFC3339))
-	
+
 		printer.StartSpinner("PING", "Testing latency...")
-		
-		// Measure layered latency
-		result, err := ping.MeasureLayered(server, 5, 10*time.Second)
+
+		result, err := ping.MeasureLayered(server, 5, timeout)
 		if err != nil {
 			printer.StopSpinner()
 			printer.PrintError(fmt.Sprintf("Ping failed: %v", err))
 			return
 		}
 
-		// Apply Pauta outlier filtering
 		filter := ping.NewPautaFilter()
 		filtered, removed := filter.Filter(result.Samples)
 		if removed > 0 {
