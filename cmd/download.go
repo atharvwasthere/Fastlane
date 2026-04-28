@@ -1,13 +1,17 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/atharvwasthere/Fastlane/internal/config"
 	"github.com/atharvwasthere/Fastlane/internal/download"
+	"github.com/atharvwasthere/Fastlane/internal/format"
 	"github.com/atharvwasthere/Fastlane/pkg/output"
 	"github.com/atharvwasthere/Fastlane/pkg/ui"
 	"github.com/fatih/color"
@@ -15,23 +19,6 @@ import (
 )
 
 var downloadFlags config.CommandFlags
-
-// formatBytes converts bytes to human-readable format
-func formatBytes(bytes int64) string {
-	if bytes < 1024 {
-		return fmt.Sprintf("%d B", bytes)
-	}
-	kb := float64(bytes) / 1024
-	if kb < 1024 {
-		return fmt.Sprintf("%.1f KB", kb)
-	}
-	mb := kb / 1024
-	if mb < 1024 {
-		return fmt.Sprintf("%.1f MB", mb)
-	}
-	gb := mb / 1024
-	return fmt.Sprintf("%.1f GB", gb)
-}
 
 var downloadCmd = &cobra.Command{
 	Use:   "download [host]",
@@ -68,6 +55,14 @@ var downloadCmd = &cobra.Command{
 
 		// Create and run engine
 		engine := download.NewEngine(downloadCfg)
+
+		// Ctrl-C / SIGTERM aborts the test and surfaces partial results.
+		signalCtx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stopSignal()
+		go func() {
+			<-signalCtx.Done()
+			engine.Cancel()
+		}()
 
 		// JSON output mode
 		if globalFlags.JSON {
@@ -198,7 +193,7 @@ var downloadCmd = &cobra.Command{
 				fmt.Printf("%.3f %s Convergence threshold: 0.030", cv, cvStatus)
 				
 				// Update Samples, Threads, Data: restore, move to line 7, column 4
-				dataStr := formatBytes(bytes)
+				dataStr := format.Bytes(bytes)
 				fmt.Printf("\033[u\033[6B\033[4C\033[K")
 				fmt.Printf("Samples: %-3d  │  Threads: %-3d  │  Data: %s", samples, downloadCfg.Threads, dataStr)
 				

@@ -1,12 +1,16 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/atharvwasthere/Fastlane/internal/config"
+	"github.com/atharvwasthere/Fastlane/internal/format"
 	"github.com/atharvwasthere/Fastlane/internal/upload"
 	"github.com/atharvwasthere/Fastlane/pkg/output"
 	"github.com/atharvwasthere/Fastlane/pkg/ui"
@@ -52,6 +56,14 @@ var uploadCmd = &cobra.Command{
 
 		// Create and run engine
 		engine := upload.NewEngine(uploadCfg)
+
+		// Ctrl-C / SIGTERM aborts the test and surfaces partial results.
+		signalCtx, stopSignal := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stopSignal()
+		go func() {
+			<-signalCtx.Done()
+			engine.Cancel()
+		}()
 
 		// JSON output mode
 		if globalFlags.JSON {
@@ -182,7 +194,7 @@ var uploadCmd = &cobra.Command{
 				fmt.Printf("%.3f %s Convergence threshold: 0.030", cv, cvStatus)
 				
 				// Update Samples, Threads, Data: restore, move to line 7, column 4
-				dataStr := formatBytes(bytes)
+				dataStr := format.Bytes(bytes)
 				fmt.Printf("\033[u\033[6B\033[4C\033[K")
 					fmt.Printf("Samples: %-3d  │  Threads: %-3d  │  Data: %s", samples, uploadCfg.Threads, dataStr)
 				

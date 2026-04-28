@@ -278,3 +278,9 @@ func (e *Engine) GetSampleCount() int {
 	defer e.mu.RUnlock()
 	return len(e.samples)
 }
+
+// Cancel aborts an in-flight Run. Safe to call from any goroutine and from
+// signal handlers. The Run goroutine returns whatever was collected so far.
+func (e *Engine) Cancel() {
+	e.cancel()
+}
