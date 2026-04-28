@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 )
@@ -20,7 +20,7 @@ func NewLoader() *Loader {
 
 // LoadFromJSON loads servers from a JSON file
 func (l *Loader) LoadFromJSON(filepath string) error {
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return fmt.Errorf("failed to read JSON file: %w", err)
 	}
