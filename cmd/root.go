@@ -1,32 +1,31 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"os"
 
-	"github.com/atharvwasthere/Fastlane/internal/ui"
+	"github.com/atharvwasthere/Fastlane/internal/config"
+	"github.com/atharvwasthere/Fastlane/pkg/ui"
 	"github.com/spf13/cobra"
 )
 
-var saveReport bool
+var (
+	globalFlags config.GlobalFlags
+	saveReport  bool
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "Fastlane",
-	Short: "Fastlane ▸ Benchmark your bandwidth. Beautifully.",
-	Long: ` Get blazing fast network performance insights from your command line.
- It's built for speed and simplicity, helping you quickly measure ping latency, download, upload, and advanced network diagnostics with ease.`,
+	Use:   "fastlane",
+	Short: "Fastlane ▸ Network benchmarking made simple.",
+	Long: `Fastlane is a modular, cross-platform CLI tool for network benchmarking.
+Measure latency, download/upload speeds, and packet loss with JSON or text output.`,
+	Version: "0.1.0",
 	Run: func(cmd *cobra.Command, args []string) {
-		ui := ui.NewPrinter(false) // or pass verbose as needed
-		ui.PrintLogo()
-		ui.PrintTaglineBox()
-		ui.PrintHelpSectionInline()
+		printer := ui.NewPrinter(globalFlags.Verbose)
+		printer.PrintLogo()
+		printer.PrintTaglineBox()
+		cmd.Help()
 	},
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -39,29 +38,10 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.Fastlane.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
-	rootCmd.SetHelpTemplate(`
-Fastlane ▸ Benchmark your bandwidth. Beautifully.
-
-Usage:
-  {{.UseLine}}
-
-Available Commands:
-{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name 10}} {{.Short}}{{end}}{{end}}
-
-Flags:
-{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}
-
-Use "{{.CommandPath}} [command] --help" for more information about a command.
-`)
+	// Global persistent flags
+	rootCmd.PersistentFlags().BoolVar(&globalFlags.JSON, "json", false, "Output results as JSON")
+	rootCmd.PersistentFlags().BoolVarP(&globalFlags.Verbose, "verbose", "v", false, "Enable verbose output")
+	rootCmd.PersistentFlags().Uint32Var(&globalFlags.Timeout, "timeout", 30, "Timeout in seconds for tests")
+	rootCmd.PersistentFlags().BoolVar(&globalFlags.Debug, "debug", false, "Enable debug logging")
+	rootCmd.PersistentFlags().BoolVar(&globalFlags.NoColor, "no-color", false, "Disable colored output")
 }

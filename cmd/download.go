@@ -1,112 +1,249 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
-	"context"
 	"fmt"
+	"os"
+	"strings"
 	"time"
-    "github.com/atharvwasthere/Fastlane/internal/nettest"
-	"github.com/atharvwasthere/Fastlane/internal/server"
-	"github.com/atharvwasthere/Fastlane/internal/ui"
-	"github.com/atharvwasthere/Fastlane/internal/utils"
-    "github.com/spf13/cobra"
+
+	"github.com/atharvwasthere/Fastlane/internal/config"
+	"github.com/atharvwasthere/Fastlane/internal/download"
+	"github.com/atharvwasthere/Fastlane/pkg/output"
+	"github.com/atharvwasthere/Fastlane/pkg/ui"
+	"github.com/fatih/color"
+	"github.com/spf13/cobra"
 )
 
-var (
-	downloadServer string
-	downloadVerbose bool
-	downloadJSON bool 
-)
+var downloadFlags config.CommandFlags
 
-// downloadCmd represents the download command
-var downloadCmd = &cobra.Command{
-	Use:   "download",
-	Short: "Get a summary of your test results.",
-	Long: `Runs a download speed test using TCP sockets with HTTP fallback, measuring bandwidth and speed.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		err := runDownload(cmd, args) 
-		if err != nil {
-		fmt.Println("Download failed:", err)
+// formatBytes converts bytes to human-readable format
+func formatBytes(bytes int64) string {
+	if bytes < 1024 {
+		return fmt.Sprintf("%d B", bytes)
 	}
+	kb := float64(bytes) / 1024
+	if kb < 1024 {
+		return fmt.Sprintf("%.1f KB", kb)
+	}
+	mb := kb / 1024
+	if mb < 1024 {
+		return fmt.Sprintf("%.1f MB", mb)
+	}
+	gb := mb / 1024
+	return fmt.Sprintf("%.1f GB", gb)
+}
+
+var downloadCmd = &cobra.Command{
+	Use:   "download [host]",
+	Short: "Measure download speed",
+	Long:  `Measure download bandwidth using multi-threaded TCP streams with convergence detection.`,
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		server := downloadFlags.Server
+		if server == "" {
+			// Use a real test server - 100MB test file from Cloudflare
+			server = "https://speed.cloudflare.com/__down?bytes=104857600"
+		}
+
+		// Build download engine configuration
+		testDuration := time.Duration(globalFlags.Timeout) * time.Second
+		if testDuration == 0 {
+			testDuration = 60 * time.Second
+		}
+
+		timeout := time.Duration(globalFlags.Timeout) * time.Second
+		if timeout == 0 {
+			timeout = 30 * time.Second
+		}
+
+		downloadCfg := download.Config{
+			URL:            server,
+			Threads:        downloadFlags.Threads,
+			Timeout:        timeout,
+			TestDuration:   testDuration,
+			CVThreshold:    0.03,
+			UpdateInterval: 100 * time.Millisecond,
+			MinSamples:     5,
+		}
+
+		// Create and run engine
+		engine := download.NewEngine(downloadCfg)
+
+		// JSON output mode
+		if globalFlags.JSON {
+			result, err := engine.Run()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
+
+			jsonResult := output.NewResult("download", server)
+			jsonResult.Data["final_mbps"] = result.FinalMbps
+			jsonResult.Data["mean_mbps"] = result.MeanMbps
+			jsonResult.Data["stddev_mbps"] = result.StdDevMbps
+			jsonResult.Data["ewma_mbps"] = result.EWMAMbps
+			jsonResult.Data["min_mbps"] = result.MinMbps
+			jsonResult.Data["max_mbps"] = result.MaxMbps
+			jsonResult.Data["bytes_downloaded"] = result.BytesDownloaded
+			jsonResult.Data["threads"] = result.Threads
+			jsonResult.Data["samples"] = result.SamplesCollected
+			jsonResult.Data["duration_seconds"] = result.Duration.Seconds()
+			jsonResult.Data["convergence_cv"] = result.ConvergenceCV
+			jsonResult.Data["converged"] = result.Converged
+
+			jsonWriter := output.NewJSONWriter(os.Stdout)
+			jsonWriter.WriteResult(jsonResult)
+			return
+		}
+
+		// Text output mode with live progress
+		printer := ui.NewPrinter(globalFlags.Verbose)
+		
+		// Clear screen and print header once
+		fmt.Print("\033[2J\033[H") // Clear screen and move to top
+		printer.PrintLogo()
+		printer.PrintTaglineBox()
+		printer.PrintBox("FASTLANE NETWORK BENCHMARK")
+		printer.PrintDetails(server, "Unknown", "Unknown", time.Now().Format(time.RFC3339))
+		fmt.Println()
+
+		// Run test in background and display live progress
+		resultChan := make(chan *download.Result)
+		errChan := make(chan error)
+		go func() {
+			result, err := engine.Run()
+			if err != nil {
+				errChan <- err
+			} else {
+				resultChan <- result
+			}
+		}()
+
+		// Display live progress
+		progress := download.NewLiveProgress(60)
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
+
+		// Render the static box structure ONCE
+		cyan := color.New(color.FgCyan).SprintFunc()
+		fmt.Println(cyan("╔════════════════════════════════════════════════════════╗"))
+		fmt.Println(cyan("║") + " DOWNLOAD TEST IN PROGRESS                             " + cyan("║"))
+		fmt.Println(cyan("║") + " Speed:  [                                    ]        " + cyan("║"))
+		fmt.Println(cyan("║") + " EWMA:                                                  " + cyan("║"))
+		fmt.Println(cyan("║") + " Mean:                                                  " + cyan("║"))
+		fmt.Println(cyan("║") + " CV:                                                    " + cyan("║"))
+		fmt.Println(cyan("║") + " Samples:    │  Threads:    │  Data:                   " + cyan("║"))
+		fmt.Println(cyan("║") + " Status:                                                " + cyan("║"))
+		fmt.Println(cyan("╚════════════════════════════════════════════════════════╝"))
+		
+		// Save cursor position at the top of the box for updates
+		fmt.Printf("\033[9A") // Move back up to top of box
+		fmt.Printf("\033[s")  // Save cursor position
+		
+		var result *download.Result
+		for result == nil {
+			select {
+			case result = <-resultChan:
+				break
+			case err := <-errChan:
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			case <-ticker.C:
+				mean, ewma, stddev, converged, cv := engine.GetCurrentStats()
+				bytes := engine.GetBytesDownloaded()
+				samples := engine.GetSampleCount()
+				
+				// Precompute values
+				barWidth := 36
+				maxMbps := 100.0
+				if ewma > maxMbps {
+					maxMbps = ewma * 1.2
+				}
+				filled := int((ewma / maxMbps) * float64(barWidth))
+				if filled < 0 {
+					filled = 0
+				}
+				if filled > barWidth {
+					filled = barWidth
+				}
+				barStr := strings.Repeat("=", filled) + strings.Repeat(" ", barWidth-filled)
+				
+				green := color.New(color.FgGreen).SprintFunc()
+				yellow := color.New(color.FgYellow).SprintFunc()
+				
+				// Restore cursor to saved position (top of box)
+				fmt.Printf("\033[u")
+				
+				// Update Speed bar: move to line 3, column 11
+				fmt.Printf("\033[2B\033[11C") // Down 2 lines, right 11 cols
+				fmt.Printf("\033[K")          // Clear to end of line
+				fmt.Printf("[%s]", barStr)
+				
+				// Update EWMA: restore, move to line 4, column 10
+				fmt.Printf("\033[u\033[3B\033[10C\033[K") // Restore, down 3, right 10, clear to EOL
+				fmt.Printf("%s", green(fmt.Sprintf("%.1f Mbps", ewma)))
+				
+				// Update Mean ± StdDev: restore, move to line 5, column 10
+				fmt.Printf("\033[u\033[4B\033[10C\033[K")
+				fmt.Printf("%.1f Mbps ± %.1f Mbps", mean, stddev)
+				
+				// Update CV: restore, move to line 6, column 7
+				cvStatus := "○"
+				if cv < 0.03 && cv > 0 {
+					cvStatus = green("✓")
+				} else if cv < 0.1 {
+					cvStatus = yellow("○")
+				}
+				fmt.Printf("\033[u\033[5B\033[7C\033[K")
+				fmt.Printf("%.3f %s Convergence threshold: 0.030", cv, cvStatus)
+				
+				// Update Samples, Threads, Data: restore, move to line 7, column 4
+				dataStr := formatBytes(bytes)
+				fmt.Printf("\033[u\033[6B\033[4C\033[K")
+				fmt.Printf("Samples: %-3d  │  Threads: %-3d  │  Data: %s", samples, downloadCfg.Threads, dataStr)
+				
+				// Update Status: restore, move to line 8, column 10
+				fmt.Printf("\033[u\033[7B\033[10C\033[K")
+				if converged {
+					fmt.Printf("%s", green("CONVERGED"))
+				} else {
+					fmt.Printf("Testing...")
+				}
+				
+				// Move cursor below the box
+				fmt.Printf("\033[u\033[9B\r")
+			}
+		}
+
+		// Print final summary
+		fmt.Print("\033[2J\033[H") // Clear screen
+		printer.PrintLogo()
+		printer.PrintTaglineBox()
+		printer.PrintBox("FASTLANE NETWORK BENCHMARK")
+		fmt.Println(progress.RenderSummary(result))
+
+		// Print text summary
+		printer.PrintSection("Download Speed Summary")
+		printer.PrintDownloadResult(result.FinalMbps, result.StdDevMbps)
+		fmt.Printf("    EWMA:       %.2f Mbps\n", result.EWMAMbps)
+		fmt.Printf("    Min/Max:    %.2f / %.2f Mbps\n", result.MinMbps, result.MaxMbps)
+		fmt.Printf("    Threads:    %d\n", result.Threads)
+		fmt.Printf("    Samples:    %d\n", result.SamplesCollected)
+		fmt.Printf("    Duration:   %s\n", result.Duration.Round(10*time.Millisecond))
+		fmt.Printf("    Data:       %.2f MB\n", float64(result.BytesDownloaded)/1024/1024)
+		if result.Converged {
+			fmt.Printf("    Status:     ✓ CONVERGED (CV: %.4f)\n", result.ConvergenceCV)
+		} else {
+			fmt.Printf("    Status:     ○ No convergence (CV: %.4f)\n", result.ConvergenceCV)
+		}
+
+		printer.PrintBoxFooter("Download test completed successfully")
 	},
 }
 
-func runDownload(cmd *cobra.Command, args []string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	// Load servers
-	selector, err := server.NewSelector("assets\\server.json")
-	if err != nil {
-		return fmt.Errorf("failed to load servers: %v", err)
-	}
-
-	targetServer := downloadServer
-	if targetServer == "" {
-		targetServer = "proof.ovh.net"
-	}
-
-	printer := ui.NewPrinter(downloadVerbose)
-
-	// UI Box Header
-	printer.PrintBox("FASTLANE NETWORK BENCHMARK")
-
-	// Server Info
-	srv := selector.GetServer(targetServer)
-	printer.PrintDetails(targetServer, srv.Location, srv.Country, time.Now().Format(time.RFC3339))
-
-	// Start Spinner
-	printer.StartSpinner("DOWNLOAD", "Testing bandwidth...")
-	result, err := nettest.Download(ctx, targetServer, downloadVerbose, printer)
-	printer.StopSpinner()
-
-	if err != nil {
-		printer.PrintError(fmt.Sprintf("Download failed: %v", err))
-		printer.FinishProgressBar()
-		return err
-	}
-
-	printer.FinishProgressBar()
-
-	if saveReport {
-		filepath, err := utils.SaveReport(result, targetServer)
-			if err != nil {
-				printer.PrintError(fmt.Sprintf("Failed to save report: %v", err))
-				return err
-			}
-			printer.PrintReportSaved(filepath)
-	}
-
-	// Output results
-	if downloadJSON {
-		jsonOut, err := utils.ToJSON(result)
-		if err != nil {
-			return fmt.Errorf("JSON encoding failed: %v", err)
-		}
-		fmt.Println(jsonOut)
-		return nil
-	}
-
-	printer.PrintDownloadResult(result)
-	printer.PrintBoxFooter("Completed: Download test passed successfully")
-	return nil
-}
-
 func init() {
-	downloadCmd.Flags().StringVar(&downloadServer, "server", "", "Target server host (e.g., speedtest.hetzner.de)")
-	downloadCmd.Flags().BoolVarP(&downloadVerbose, "verbose", "v", false, "Verbose output")
-	downloadCmd.Flags().BoolVar(&downloadJSON, "json", false, "Output result as JSON")
-	downloadCmd.Flags().BoolVar(&saveReport, "save-report", true, "Save report to JSON file")
+	downloadCmd.Flags().StringVar(&downloadFlags.Server, "server", "", "Target server host")
+	downloadCmd.Flags().IntVar(&downloadFlags.Threads, "threads", 4, "Number of concurrent streams")
+	downloadCmd.Flags().BoolVar(&downloadFlags.SaveReport, "save-report", true, "Save report to file")
 	rootCmd.AddCommand(downloadCmd)
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// downloadCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// downloadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
