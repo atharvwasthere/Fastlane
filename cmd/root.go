@@ -5,6 +5,7 @@ import (
 
 	"github.com/atharvwasthere/Fastlane/internal/config"
 	"github.com/atharvwasthere/Fastlane/pkg/ui"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,13 @@ var rootCmd = &cobra.Command{
 	Long: `Fastlane is a modular, cross-platform CLI tool for network benchmarking.
 Measure latency, download/upload speeds, and packet loss with JSON or text output.`,
 	Version: "0.1.0",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Honor --no-color and the NO_COLOR convention (https://no-color.org).
+		// JSON output is structured data — never colored regardless.
+		if globalFlags.NoColor || os.Getenv("NO_COLOR") != "" || globalFlags.JSON {
+			color.NoColor = true
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		printer := ui.NewPrinter(globalFlags.Verbose)
 		printer.PrintLogo()
