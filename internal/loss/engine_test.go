@@ -3,13 +3,14 @@ package loss
 import (
 	"context"
 	"net"
+	"strconv"
 	"testing"
 	"time"
 )
 
 // Mock UDP echo server for testing
 func startMockUDPServer(t *testing.T, port int, dropRate float64) *net.UDPConn {
-	addr, err := net.ResolveUDPAddr("udp", ":"+string(rune(port)))
+	addr, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	if err != nil {
 		t.Fatalf("Failed to resolve UDP address: %v", err)
 	}

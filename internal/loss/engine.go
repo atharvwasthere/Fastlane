@@ -91,52 +91,54 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 	}
 	defer conn.Close()
 	
-	// Channel to receive acknowledgments (if server supports echo)
+	// doneChan signals the receiver to stop. The receiver owns ackChan and
+	// closes it on the way out, so we never close from the sender side
+	// (which would race the receiver's send and panic).
 	ackChan := make(chan int64, e.config.Count)
 	doneChan := make(chan struct{})
-	
-	// Start receiver goroutine (for echo/response packets)
-	go e.receiver(conn, ackChan, doneChan)
-	
-	// Send packets with sequence numbers
+	receiverDone := make(chan struct{})
+
+	go func() {
+		e.receiver(conn, ackChan, doneChan)
+		close(ackChan)
+		close(receiverDone)
+	}()
+
 	interval := time.Second / time.Duration(e.config.Rate)
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	
+
 	testCtx, cancel := context.WithTimeout(ctx, e.config.Timeout)
 	defer cancel()
-	
+
 	var seq int64
+sendLoop:
 	for seq = 0; seq < int64(e.config.Count); seq++ {
 		select {
 		case <-testCtx.Done():
-			close(doneChan)
-			return e.buildResult(time.Since(startTime)), nil
+			break sendLoop
 		case <-ticker.C:
-			// Create packet with sequence number and timestamp
 			packet := e.createPacket(seq)
-			
-			// Send packet
-			_, err := conn.Write(packet)
-			if err != nil {
-				// Continue on error, count as sent but likely lost
-			}
+			_, _ = conn.Write(packet)
 			e.mu.Lock()
 			e.sent++
 			e.mu.Unlock()
 		}
 	}
-	
-	// Wait a bit for remaining responses
-	time.Sleep(time.Second)
-	close(doneChan)
-	
-	// Collect received acknowledgments
-	close(ackChan)
-	for range ackChan {
-		// Count received packets
+
+	// Give late responses a moment to land, then signal the receiver to exit.
+	// Unblocking the blocking ReadFromUDP requires bumping the deadline.
+	select {
+	case <-testCtx.Done():
+	case <-time.After(time.Second):
 	}
-	
+	close(doneChan)
+	_ = conn.SetReadDeadline(time.Now())
+	<-receiverDone
+	for range ackChan {
+		// drain
+	}
+
 	return e.buildResult(time.Since(startTime)), nil
 }
 
