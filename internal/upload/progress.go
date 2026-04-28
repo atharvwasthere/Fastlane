@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/atharvwasthere/Fastlane/internal/format"
 	"github.com/fatih/color"
 )
 
@@ -25,33 +26,6 @@ func NewLiveProgress(width int) *LiveProgress {
 	}
 }
 
-// formatBytes converts bytes to human-readable format
-func formatBytes(bytes int64) string {
-	if bytes < 1024 {
-		return fmt.Sprintf("%d B", bytes)
-	}
-	kb := float64(bytes) / 1024
-	if kb < 1024 {
-		return fmt.Sprintf("%.1f KB", kb)
-	}
-	mb := kb / 1024
-	if mb < 1024 {
-		return fmt.Sprintf("%.1f MB", mb)
-	}
-	gb := mb / 1024
-	return fmt.Sprintf("%.1f GB", gb)
-}
-
-// formatMbps formats Mbps with appropriate precision
-func formatMbps(mbps float64) string {
-	if mbps < 10 {
-		return fmt.Sprintf("%.2f Mbps", mbps)
-	}
-	if mbps < 100 {
-		return fmt.Sprintf("%.1f Mbps", mbps)
-	}
-	return fmt.Sprintf("%.0f Mbps", mbps)
-}
 
 // RenderFrame renders a single frame of the download progress
 func (lp *LiveProgress) RenderFrame(mean, ewma, stddev, cv float64, threads, samples int, converged bool, bytesDownloaded int64) string {
@@ -70,11 +44,11 @@ func (lp *LiveProgress) RenderFrame(mean, ewma, stddev, cv float64, threads, sam
 	output.WriteString(cyan("║") + " Speed:  " + speedBar + "   " + cyan("║") + "\n")
 
 	// EWMA value
-	ewmaStr := fmt.Sprintf("%-13s", formatMbps(ewma))
+	ewmaStr := fmt.Sprintf("%-13s", format.Mbps(ewma))
 	output.WriteString(cyan("║") + " EWMA:   " + green(ewmaStr) + "                                    " + cyan("║") + "\n")
 
 	// Mean ± StdDev
-	meanStr := fmt.Sprintf("%s ± %s", formatMbps(mean), formatMbps(stddev))
+	meanStr := fmt.Sprintf("%s ± %s", format.Mbps(mean), format.Mbps(stddev))
 	output.WriteString(cyan("║") + " Mean:   " + fmt.Sprintf("%-44s", meanStr) + " " + cyan("║") + "\n")
 
 	// Coefficient of Variation with status
@@ -88,7 +62,7 @@ func (lp *LiveProgress) RenderFrame(mean, ewma, stddev, cv float64, threads, sam
 	output.WriteString(cyan("║") + " " + fmt.Sprintf("%-53s", cvLine) + " " + cyan("║") + "\n")
 
 	// Samples and threads
-	infoLine := fmt.Sprintf("Samples: %d  │  Threads: %d  │  Data: %s", samples, threads, formatBytes(bytesDownloaded))
+	infoLine := fmt.Sprintf("Samples: %d  │  Threads: %d  │  Data: %s", samples, threads, format.Bytes(bytesDownloaded))
 	output.WriteString(cyan("║") + " " + fmt.Sprintf("%-53s", infoLine) + " " + cyan("║") + "\n")
 
 	// Convergence status
@@ -159,7 +133,7 @@ func (lp *LiveProgress) RenderSummary(result *Result) string {
 		"", result.Duration.Round(10*time.Millisecond).String(), cyan("")))
 
 	output.WriteString(fmt.Sprintf("%s ║ Bytes Uploaded: %s%-32s%s│\n", cyan(""),
-		"", formatBytes(result.BytesUploaded), cyan("")))
+		"", format.Bytes(result.BytesUploaded), cyan("")))
 
 	output.WriteString(fmt.Sprintf("%s ║ Samples:        %d  │  Threads: %d%-24s│\n", cyan(""),
 		result.SamplesCollected, result.Threads, " "))
