@@ -1,0 +1,11 @@
+╭─ download [speed.cloudflare.com] ────────────────────────────────────────╮
+│                                                                          │
+│  ✓ Throughput is healthy                                                 │
+│  244 Mbps · 4 threads · converged                                        │
+│                                                                          │
+│  244 Mbps                 238 Mbps                 240 Mbps              │
+│  FINAL                    EWMA                     MEAN                  │
+│                                                                          │
+│  CV 0.021 · EWMA 238 Mbps · 244.0 MB transferred                         │
+│                                                                          │
+╰──────────────────────────────────────────────────────────────────────────╯

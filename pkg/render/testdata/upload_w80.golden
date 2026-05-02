@@ -1,0 +1,11 @@
+╭─ upload [speed.cloudflare.com] ──────────────────────────────────────────╮
+│                                                                          │
+│  ! Throughput is moderate                                                │
+│  38.2 Mbps · 4 threads · converged                                       │
+│                                                                          │
+│  38.2 Mbps                37.9 Mbps                37.5 Mbps             │
+│  FINAL                    EWMA                     MEAN                  │
+│                                                                          │
+│  CV 0.029 · EWMA 37.9 Mbps · 39.1 MB transferred                         │
+│                                                                          │
+╰──────────────────────────────────────────────────────────────────────────╯

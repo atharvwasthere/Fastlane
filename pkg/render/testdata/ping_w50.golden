@@ -1,0 +1,13 @@
+╭─ ping [cloudflare.com] ────────────────────╮
+│                                            │
+│  ✓ Connection is healthy                   │
+│  22 ms average · jitter 3.0 ms · 10        │
+│  samples                                   │
+│                                            │
+│  22ms                   51ms               │
+│  AVG LATENCY            WORST CASE         │
+│                                            │
+│  3ms                                       │
+│  JITTER                                    │
+│                                            │
+╰────────────────────────────────────────────╯
