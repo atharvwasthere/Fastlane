@@ -4,6 +4,10 @@ Structure.txt
 .agents
 assets\GeoLite2-City.mmdb
 
+bin/
+*.exe
+coverage.out
+
 --DOCS--
 
 .DS_Store
