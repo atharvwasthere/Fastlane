@@ -2,14 +2,13 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
+	cmdint "github.com/atharvwasthere/Fastlane/cmd/internal"
 	"github.com/atharvwasthere/Fastlane/internal/config"
-	"github.com/atharvwasthere/Fastlane/internal/loss"
-	"github.com/atharvwasthere/Fastlane/pkg/output"
-	"github.com/atharvwasthere/Fastlane/pkg/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -26,96 +25,31 @@ var lossCmd = &cobra.Command{
 			if len(args) > 0 {
 				host = args[0]
 			} else {
-				host = "8.8.8.8" // Google DNS as default
+				host = "8.8.8.8"
 			}
 		}
 
-		// Build loss test configuration
-		lossConfig := loss.Config{
+		timeout := time.Duration(globalFlags.Timeout) * time.Second
+		if timeout == 0 {
+			timeout = 30 * time.Second
+		}
+
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+
+		engine := cmdint.LossEngine(cmdint.LossParams{
 			Host:         host,
-			Port:         7, // Echo protocol port
-			Count:        100,
+			Port:         7,
+			Count:        lossFlags.Count,
 			PacketSize:   32,
-			Rate:         10, // 10 packets/sec
-			Timeout:      time.Duration(globalFlags.Timeout) * time.Second,
+			Rate:         lossFlags.Rate,
+			Timeout:      timeout,
 			EnableJitter: true,
-		}
-
-		if lossConfig.Timeout == 0 {
-			lossConfig.Timeout = 30 * time.Second
-		}
-
-		// Create and run engine
-		engine := loss.NewEngine(lossConfig)
-
-		// JSON output mode
-		if globalFlags.JSON {
-			ctx := context.Background()
-			result, err := engine.Run(ctx)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-				os.Exit(1)
-			}
-
-			jsonResult := output.NewResult("loss", host)
-			jsonResult.Data["packets_sent"] = result.PacketsSent
-			jsonResult.Data["packets_received"] = result.PacketsReceived
-			jsonResult.Data["packets_lost"] = result.PacketsLost
-			jsonResult.Data["loss_percent"] = result.LossPercent
-			jsonResult.Data["jitter_ms"] = result.JitterMS
-			jsonResult.Data["duration_seconds"] = result.Duration.Seconds()
-			jsonResult.Data["test_complete"] = result.TestComplete
-
-			jsonWriter := output.NewJSONWriter(os.Stdout)
-			jsonWriter.WriteResult(jsonResult)
-			return
-		}
-
-		// Text output mode
-		printer := ui.NewPrinter(globalFlags.Verbose)
-		printer.PrintLogo()
-		printer.PrintTaglineBox()
-
-		printer.PrintBox("FASTLANE NETWORK BENCHMARK")
-		printer.PrintDetails(host, "Unknown", "Unknown", time.Now().Format(time.RFC3339))
-
-		printer.PrintSection("UDP Packet Loss Test")
-		fmt.Printf("  Sending %d packets to %s:%d...\n", lossConfig.Count, host, lossConfig.Port)
-		fmt.Println()
-
-		// Run test with progress
-		printer.StartSpinner("loss", "Testing packet loss")
-		
-		ctx := context.Background()
-		result, err := engine.Run(ctx)
-		
-		printer.StopSpinner()
-
-		if err != nil {
-			printer.PrintError(fmt.Sprintf("Test failed: %v", err))
+		})
+		renderer := cmdint.NewRenderer(globalFlags)
+		if err := cmdint.RunBench(ctx, "loss", host, engine, renderer); err != nil {
 			os.Exit(1)
 		}
-
-		// Print results
-		printer.PrintSection("Packet Loss Results")
-		printer.PrintLossResult(result.LossPercent, result.PacketsSent, result.PacketsReceived)
-		
-		if lossConfig.EnableJitter && result.JitterMS > 0 {
-			fmt.Printf("    Jitter:   %.2f ms\n", result.JitterMS)
-		}
-		fmt.Printf("    Duration: %s\n", result.Duration.Round(10*time.Millisecond))
-
-		if result.LossPercent == 0 {
-			printer.PrintSuccess("No packet loss detected")
-		} else if result.LossPercent < 1.0 {
-			printer.PrintInfo(fmt.Sprintf("Low packet loss: %.2f%%", result.LossPercent))
-		} else if result.LossPercent < 5.0 {
-			fmt.Printf("\n⚠️  Moderate packet loss detected\n")
-		} else {
-			fmt.Printf("\n❌ High packet loss detected\n")
-		}
-
-		printer.PrintBoxFooter("Packet loss test completed")
 	},
 }
 

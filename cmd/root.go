@@ -5,7 +5,9 @@ import (
 
 	"github.com/atharvwasthere/Fastlane/internal/config"
 	"github.com/atharvwasthere/Fastlane/pkg/ui"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
+	"github.com/muesli/termenv"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +28,7 @@ Measure latency, download/upload speeds, and packet loss with JSON or text outpu
 		// JSON output is structured data — never colored regardless.
 		if globalFlags.NoColor || os.Getenv("NO_COLOR") != "" || globalFlags.JSON {
 			color.NoColor = true
+			lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(os.Stdout, termenv.WithProfile(termenv.Ascii)))
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
