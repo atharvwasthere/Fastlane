@@ -60,5 +60,9 @@ func (e *benchEngine) Run(ctx context.Context) (bench.Result, error) {
 	r.Layers["http_ms"] = raw.HTTPLatencyMS
 	r.Counters["samples"] = int64(len(filtered))
 	r.Counters["outliers_removed"] = int64(removed)
+	r.Counters["errors"] = raw.Errors
+	if raw.Errors > int64(len(filtered)) {
+		r.Flags["degraded"] = true
+	}
 	return r, nil
 }

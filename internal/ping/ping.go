@@ -21,6 +21,7 @@ type LatencyResult struct {
 	MaxMS          float64
 	MeanMS         float64
 	Samples        []float64
+	Errors         int64 // DNS/TCP/TLS/HTTP attempt failures across all layers
 }
 
 // MeasureLayered measures latency at each protocol layer
@@ -45,6 +46,8 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 		_, err := net.LookupIP(host)
 		if err == nil {
 			dnsSamples = append(dnsSamples, float64(time.Since(start).Milliseconds()))
+		} else {
+			result.Errors++
 		}
 	}
 	if len(dnsSamples) > 0 {
@@ -59,6 +62,8 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 		if err == nil {
 			tcpSamples = append(tcpSamples, float64(time.Since(start).Milliseconds()))
 			conn.Close()
+		} else {
+			result.Errors++
 		}
 	}
 	if len(tcpSamples) > 0 {
@@ -78,6 +83,8 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 		if err == nil {
 			tlsSamples = append(tlsSamples, float64(time.Since(start).Milliseconds()))
 			conn.Close()
+		} else {
+			result.Errors++
 		}
 	}
 	if len(tlsSamples) > 0 {
@@ -93,6 +100,8 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 		if err == nil {
 			httpSamples = append(httpSamples, float64(time.Since(start).Milliseconds()))
 			resp.Body.Close()
+		} else {
+			result.Errors++
 		}
 	}
 	if len(httpSamples) > 0 {
