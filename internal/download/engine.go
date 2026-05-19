@@ -25,6 +25,7 @@ type Result struct {
 	ConvergenceCV    float64
 	SamplesCollected int
 	Converged        bool
+	Errors           int64 // dial/read failures across worker lifetime
 }
 
 // Config holds download test configuration
@@ -41,8 +42,6 @@ type Config struct {
 // Engine manages the download test
 type Engine struct {
 	config Config
-	ctx    context.Context
-	cancel context.CancelFunc
 
 	// Synchronization
 	mu sync.RWMutex
@@ -57,6 +56,7 @@ type Engine struct {
 
 	// Progress tracking
 	bytesDownloaded int64
+	errCount        int64 // dial/read failures across all workers (atomic)
 	converged       bool
 	convergenceCV   float64
 
@@ -85,13 +85,8 @@ func NewEngine(config Config) *Engine {
 		config.TestDuration = 60 * time.Second
 	}
 
-	// Use background context - test duration will control overall timeout
-	ctx, cancel := context.WithCancel(context.Background())
-
 	return &Engine{
 		config:      config,
-		ctx:         ctx,
-		cancel:      cancel,
 		welford:     stats.NewWelford(),
 		ewma:        stats.NewEWMA(0.2), // α = 0.2
 		samplesChan: make(chan float64, config.Threads*10),
@@ -100,10 +95,12 @@ func NewEngine(config Config) *Engine {
 	}
 }
 
-// Run executes the download test
-func (e *Engine) Run() (*Result, error) {
+// Run executes the download test. The caller's context governs lifecycle —
+// cancel it (or wait for TestDuration) to terminate the run. Returns the
+// partial Result accumulated up to that point.
+func (e *Engine) Run(ctx context.Context) (*Result, error) {
 	startTime := time.Now()
-	testCtx, testCancel := context.WithTimeout(e.ctx, e.config.TestDuration)
+	testCtx, testCancel := context.WithTimeout(ctx, e.config.TestDuration)
 	defer testCancel()
 
 	// Start collector goroutine
@@ -163,6 +160,7 @@ func (e *Engine) worker(ctx context.Context, threadID int) {
 		// Create request
 		req, err := http.NewRequestWithContext(ctx, "GET", e.config.URL, nil)
 		if err != nil {
+			atomic.AddInt64(&e.errCount, 1)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -171,6 +169,10 @@ func (e *Engine) worker(ctx context.Context, threadID int) {
 		startTime := time.Now()
 		resp, err := client.Do(req)
 		if err != nil {
+			// Ignore ctx-cancel: that's a clean shutdown, not a real fault.
+			if ctx.Err() == nil {
+				atomic.AddInt64(&e.errCount, 1)
+			}
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -250,7 +252,13 @@ func (e *Engine) buildResult(duration time.Duration) *Result {
 		ConvergenceCV:   finalCV,
 		SamplesCollected: len(e.samples),
 		Converged:       e.converged,
+		Errors:          atomic.LoadInt64(&e.errCount),
 	}
+}
+
+// GetErrorCount returns the current dial/read error tally.
+func (e *Engine) GetErrorCount() int64 {
+	return atomic.LoadInt64(&e.errCount)
 }
 
 // GetCurrentStats returns current statistics for live display
@@ -279,8 +287,3 @@ func (e *Engine) GetSampleCount() int {
 	return len(e.samples)
 }
 
-// Cancel aborts an in-flight Run. Safe to call from any goroutine and from
-// signal handlers. The Run goroutine returns whatever was collected so far.
-func (e *Engine) Cancel() {
-	e.cancel()
-}

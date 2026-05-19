@@ -1,6 +1,7 @@
 package download
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -8,6 +9,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"go.uber.org/goleak"
 )
 
 // startMockServer starts a simple HTTP server that sends data
@@ -31,6 +34,13 @@ func startMockServer(size int64) (string, func()) {
 
 // TestEngineBasicDownload tests basic download functionality
 func TestEngineBasicDownload(t *testing.T) {
+	// goleak guard: ensure no engine workers/collector linger after Run.
+	// http.Serve's accept goroutine stays alive (we don't shut the listener
+	// cleanly) — ignore it.
+	defer goleak.VerifyNone(t,
+		goleak.IgnoreTopFunction("net/http.(*Server).Serve"),
+		goleak.IgnoreTopFunction("internal/poll.runtime_pollWait"),
+	)
 	url, cleanup := startMockServer(1024 * 1024) // 1MB
 	defer cleanup()
 
@@ -44,7 +54,7 @@ func TestEngineBasicDownload(t *testing.T) {
 		UpdateInterval: 100 * time.Millisecond,
 	})
 
-	result, err := engine.Run()
+	result, err := engine.Run(context.Background())
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -98,7 +108,7 @@ func TestEngineMultiThreading(t *testing.T) {
 		UpdateInterval: 100 * time.Millisecond,
 	})
 
-	_, _ = engine.Run()
+	_, _ = engine.Run(context.Background())
 
 	if peakConnections < 2 {
 		t.Logf("Expected at least 2 concurrent connections, got %d", peakConnections)
@@ -120,7 +130,7 @@ func TestEngineConvergenceDetection(t *testing.T) {
 		UpdateInterval: 100 * time.Millisecond,
 	})
 
-	result, err := engine.Run()
+	result, err := engine.Run(context.Background())
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -150,7 +160,7 @@ func TestEngineStatsCalculation(t *testing.T) {
 		UpdateInterval: 100 * time.Millisecond,
 	})
 
-	result, _ := engine.Run()
+	result, _ := engine.Run(context.Background())
 
 	// Verify all stats fields are populated
 	if result.MeanMbps < 0 {
@@ -188,7 +198,7 @@ func TestEngineCleanupOnContext(t *testing.T) {
 	// Run should complete without hanging
 	done := make(chan bool)
 	go func() {
-		engine.Run()
+		engine.Run(context.Background())
 		done <- true
 	}()
 
@@ -218,7 +228,7 @@ func TestEngineGetCurrentStats(t *testing.T) {
 	// Start test in goroutine
 	done := make(chan *Result)
 	go func() {
-		result, _ := engine.Run()
+		result, _ := engine.Run(context.Background())
 		done <- result
 	}()
 
@@ -253,7 +263,7 @@ func TestEngineGetBytesDownloaded(t *testing.T) {
 
 	done := make(chan *Result)
 	go func() {
-		result, _ := engine.Run()
+		result, _ := engine.Run(context.Background())
 		done <- result
 	}()
 
@@ -310,7 +320,7 @@ func TestEngineResultFields(t *testing.T) {
 		UpdateInterval: 100 * time.Millisecond,
 	})
 
-	result, _ := engine.Run()
+	result, _ := engine.Run(context.Background())
 
 	// Verify Result structure has all required fields
 	if result.Threads == 0 {
@@ -342,7 +352,7 @@ func BenchmarkEngineDownload(b *testing.B) {
 			UpdateInterval: 100 * time.Millisecond,
 		})
 
-		engine.Run()
+		engine.Run(context.Background())
 	}
 }
 
@@ -363,7 +373,7 @@ func TestEngineConcurrentAccess(t *testing.T) {
 
 	done := make(chan *Result)
 	go func() {
-		result, _ := engine.Run()
+		result, _ := engine.Run(context.Background())
 		done <- result
 	}()
 
@@ -418,7 +428,7 @@ func TestEngineStoppedOnConvergence(t *testing.T) {
 	})
 
 	startTime := time.Now()
-	result, _ := engine.Run()
+	result, _ := engine.Run(context.Background())
 	duration := time.Since(startTime)
 
 	// If convergence was detected, should finish early

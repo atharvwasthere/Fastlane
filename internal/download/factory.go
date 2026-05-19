@@ -8,11 +8,7 @@ import (
 )
 
 // NewBenchEngine wraps the concrete download Engine into a bench.Engine.
-//
-// The wrapper bridges the existing Engine.Run() signature (no ctx) by
-// spawning Run in a goroutine and listening for ctx.Done to call Cancel().
-// Once the existing Engine grows native ctx support this becomes a thin
-// adapter.
+// The engine is now ctx-native, so the wrapper is a thin adapter.
 func NewBenchEngine(cfg Config) bench.Engine {
 	return &benchEngine{cfg: cfg, engine: NewEngine(cfg)}
 }
@@ -39,28 +35,12 @@ func (e *benchEngine) Snapshot() bench.Snapshot {
 
 func (e *benchEngine) Run(ctx context.Context) (bench.Result, error) {
 	started := time.Now()
-
-	type runResult struct {
-		res *Result
-		err error
+	res, err := e.engine.Run(ctx)
+	out := packResult(e.cfg, started, res)
+	if ctx.Err() != nil {
+		return out, ctx.Err()
 	}
-	done := make(chan runResult, 1)
-	go func() {
-		res, err := e.engine.Run()
-		done <- runResult{res, err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		e.engine.Cancel()
-		out := <-done
-		return packResult(e.cfg, started, out.res), ctx.Err()
-	case out := <-done:
-		if out.err != nil {
-			return bench.Result{}, out.err
-		}
-		return packResult(e.cfg, started, out.res), nil
-	}
+	return out, err
 }
 
 func packResult(cfg Config, started time.Time, res *Result) bench.Result {
@@ -79,6 +59,10 @@ func packResult(cfg Config, started time.Time, res *Result) bench.Result {
 	r.Counters["bytes"] = res.BytesDownloaded
 	r.Counters["threads"] = int64(res.Threads)
 	r.Counters["samples"] = int64(res.SamplesCollected)
+	r.Counters["errors"] = res.Errors
 	r.Flags["converged"] = res.Converged
+	if res.Errors > int64(res.SamplesCollected) {
+		r.Flags["degraded"] = true
+	}
 	return r
 }
