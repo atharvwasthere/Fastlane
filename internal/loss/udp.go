@@ -15,6 +15,7 @@ type Result struct {
 	PacketsSent     int64
 	PacketsReceived int64
 	PacketsLost     int64
+	Errors          int64 // connection/DNS failures (not counted as loss)
 	LossPercent     float64
 	JitterMS        float64
 	MinLatencyMS    float64
@@ -22,35 +23,50 @@ type Result struct {
 	AvgLatencyMS    float64
 	Duration        time.Duration
 	TestComplete    bool
+	Notes           []string
 }
 
-// Config holds loss test configuration
+// Mode selects the loss-measurement strategy.
+type Mode string
+
+const (
+	ModeHTTP Mode = "http" // HEAD requests over HTTP/HTTPS (default, public-internet safe)
+	ModeUDP  Mode = "udp"  // UDP echo/discard (LAN-only, requires controlled receiver)
+	ModeICMP Mode = "icmp" // reserved — not implemented yet
+)
+
+// Config holds loss test configuration. Mode picks engine; the rest are
+// shared knobs (Port is UDP-only, ignored for HTTP).
 type Config struct {
-	Host           string        // Target host for UDP packets
-	Port           int           // UDP port (default 9)
-	Count          int           // Number of packets to send (default 100)
-	PacketSize     int           // Size of each UDP packet (default 32 bytes)
-	Rate           int           // Packets per second (default 10)
-	Timeout        time.Duration // Overall test timeout (default 30s)
-	EnableJitter   bool          // Calculate jitter from inter-arrival times
+	Mode         Mode          // "http" (default) | "udp" | "icmp" (TODO)
+	Host         string        // Target host or URL
+	Port         int           // UDP port (default 9 when Mode=udp)
+	Count        int           // Number of probes to send (default 100)
+	PacketSize   int           // UDP packet size (default 32 bytes)
+	Rate         int           // Probes per second (default 10)
+	Timeout      time.Duration // Overall test timeout (default 30s)
+	EnableJitter bool          // Calculate jitter (UDP: inter-arrival, HTTP: RTT stddev)
 }
 
-// Engine manages the UDP loss test
-type Engine struct {
+// UDPEngine manages the UDP echo loss test (LAN-only, requires controlled
+// receiver). Public Internet hosts firewall port 7/9 — use HTTPEngine for
+// real-world loss measurement.
+type UDPEngine struct {
 	config Config
 	mu     sync.RWMutex
 	
 	// Metrics
 	sent     int64
 	received int64
-	
+	errCount int64 // send/recv errors (separate from packet loss)
+
 	// Jitter tracking
 	arrivalTimes []time.Time
 	interArrivals []float64
 }
 
 // NewEngine creates a new loss test engine
-func NewEngine(config Config) *Engine {
+func NewUDPEngine(config Config) *UDPEngine {
 	if config.Port == 0 {
 		config.Port = 9 // Discard protocol (standard for testing)
 	}
@@ -67,7 +83,7 @@ func NewEngine(config Config) *Engine {
 		config.Timeout = 30 * time.Second
 	}
 	
-	return &Engine{
+	return &UDPEngine{
 		config:        config,
 		arrivalTimes:  make([]time.Time, 0, config.Count),
 		interArrivals: make([]float64, 0, config.Count),
@@ -75,7 +91,7 @@ func NewEngine(config Config) *Engine {
 }
 
 // Run executes the UDP loss test
-func (e *Engine) Run(ctx context.Context) (*Result, error) {
+func (e *UDPEngine) Run(ctx context.Context) (*Result, error) {
 	startTime := time.Now()
 	
 	// Create UDP connection
@@ -119,7 +135,11 @@ sendLoop:
 			break sendLoop
 		case <-ticker.C:
 			packet := e.createPacket(seq)
-			_, _ = conn.Write(packet)
+			if _, werr := conn.Write(packet); werr != nil {
+				e.mu.Lock()
+				e.errCount++
+				e.mu.Unlock()
+			}
 			e.mu.Lock()
 			e.sent++
 			e.mu.Unlock()
@@ -143,7 +163,7 @@ sendLoop:
 }
 
 // createPacket creates a UDP packet with sequence number and timestamp
-func (e *Engine) createPacket(seq int64) []byte {
+func (e *UDPEngine) createPacket(seq int64) []byte {
 	packet := make([]byte, e.config.PacketSize)
 	
 	// First 8 bytes: sequence number
@@ -157,7 +177,7 @@ func (e *Engine) createPacket(seq int64) []byte {
 }
 
 // receiver listens for echo/response packets
-func (e *Engine) receiver(conn *net.UDPConn, ackChan chan<- int64, done <-chan struct{}) {
+func (e *UDPEngine) receiver(conn *net.UDPConn, ackChan chan<- int64, done <-chan struct{}) {
 	buffer := make([]byte, 1500) // MTU size
 	conn.SetReadDeadline(time.Now().Add(e.config.Timeout))
 	
@@ -170,7 +190,14 @@ func (e *Engine) receiver(conn *net.UDPConn, ackChan chan<- int64, done <-chan s
 		
 		n, _, err := conn.ReadFromUDP(buffer)
 		if err != nil {
-			// Timeout or error - normal for UDP
+			// Discriminate timeouts (expected for UDP) from real errors.
+			// net.Error.Timeout() catches deadline exceeded; everything else
+			// (e.g. ECONNREFUSED on Windows) gets counted.
+			if ne, ok := err.(net.Error); !ok || !ne.Timeout() {
+				e.mu.Lock()
+				e.errCount++
+				e.mu.Unlock()
+			}
 			continue
 		}
 		
@@ -200,7 +227,7 @@ func (e *Engine) receiver(conn *net.UDPConn, ackChan chan<- int64, done <-chan s
 }
 
 // buildResult creates the final result
-func (e *Engine) buildResult(duration time.Duration) *Result {
+func (e *UDPEngine) buildResult(duration time.Duration) *Result {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	
@@ -236,6 +263,7 @@ func (e *Engine) buildResult(duration time.Duration) *Result {
 		PacketsSent:     sent,
 		PacketsReceived: received,
 		PacketsLost:     lost,
+		Errors:          e.errCount,
 		LossPercent:     lossPercent,
 		JitterMS:        jitter,
 		Duration:        duration,
@@ -244,7 +272,7 @@ func (e *Engine) buildResult(duration time.Duration) *Result {
 }
 
 // GetCurrentStats returns current statistics for live display
-func (e *Engine) GetCurrentStats() (sent, received, lost int64, lossPercent float64) {
+func (e *UDPEngine) GetCurrentStats() (sent, received, lost int64, lossPercent float64) {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	

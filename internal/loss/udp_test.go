@@ -62,7 +62,7 @@ func TestEngineBasicLoss(t *testing.T) {
 		EnableJitter: false,
 	}
 
-	engine := NewEngine(config)
+	engine := NewUDPEngine(config)
 	ctx := context.Background()
 	result, err := engine.Run(ctx)
 
@@ -100,7 +100,7 @@ func TestEnginePacketLossCalculation(t *testing.T) {
 		Timeout:    3 * time.Second,
 	}
 
-	engine := NewEngine(config)
+	engine := NewUDPEngine(config)
 	ctx := context.Background()
 	result, err := engine.Run(ctx)
 
@@ -141,7 +141,7 @@ func TestEngineJitterCalculation(t *testing.T) {
 		EnableJitter: true,
 	}
 
-	engine := NewEngine(config)
+	engine := NewUDPEngine(config)
 	ctx := context.Background()
 	result, err := engine.Run(ctx)
 
@@ -160,7 +160,7 @@ func TestEngineDefaults(t *testing.T) {
 		Host: "127.0.0.1",
 	}
 
-	engine := NewEngine(config)
+	engine := NewUDPEngine(config)
 
 	if engine.config.Port != 9 {
 		t.Errorf("Expected default port 9, got %d", engine.config.Port)
@@ -184,7 +184,7 @@ func TestEngineDefaults(t *testing.T) {
 }
 
 func TestEngineGetCurrentStats(t *testing.T) {
-	engine := NewEngine(Config{
+	engine := NewUDPEngine(Config{
 		Host: "127.0.0.1",
 	})
 
@@ -224,7 +224,7 @@ func TestEngineTimeout(t *testing.T) {
 		Timeout: 1 * time.Second, // Short timeout
 	}
 
-	engine := NewEngine(config)
+	engine := NewUDPEngine(config)
 	ctx := context.Background()
 	result, err := engine.Run(ctx)
 
@@ -243,7 +243,7 @@ func TestEngineTimeout(t *testing.T) {
 }
 
 func TestEnginePacketCreation(t *testing.T) {
-	engine := NewEngine(Config{
+	engine := NewUDPEngine(Config{
 		Host:       "127.0.0.1",
 		PacketSize: 64,
 	})
@@ -262,7 +262,7 @@ func TestEnginePacketCreation(t *testing.T) {
 }
 
 func TestEngineConcurrentAccess(t *testing.T) {
-	engine := NewEngine(Config{
+	engine := NewUDPEngine(Config{
 		Host: "127.0.0.1",
 	})
 
@@ -286,7 +286,7 @@ func TestEngineConcurrentAccess(t *testing.T) {
 }
 
 func TestEngineZeroLoss(t *testing.T) {
-	engine := NewEngine(Config{
+	engine := NewUDPEngine(Config{
 		Host: "127.0.0.1",
 	})
 
@@ -307,7 +307,7 @@ func TestEngineZeroLoss(t *testing.T) {
 }
 
 func TestEngineCompleteLoss(t *testing.T) {
-	engine := NewEngine(Config{
+	engine := NewUDPEngine(Config{
 		Host: "127.0.0.1",
 	})
 
