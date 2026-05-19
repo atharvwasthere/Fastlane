@@ -1,0 +1,187 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.t{font-family:'Courier New',monospace;font-size:12.5px;line-height:1.6;color:#b8b4ad;background:#0c0c0c;border-radius:8px;overflow:hidden}
+.bar{background:#141414;padding:8px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #1e1e1e}
+.d{width:9px;height:9px;border-radius:50%}
+.cmd-line{padding:10px 16px 14px;border-bottom:1px solid #181818;font-size:11px;color:#3a3a3a}
+.cmd-line span{color:#484848}
+.body{padding:16px}
+.verdict{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #181818}
+.verdict-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.verdict-text{}
+.verdict-title{font-size:15px;font-weight:bold}
+.verdict-sub{font-size:11px;color:#484848;margin-top:1px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#181818;margin-bottom:16px}
+.m{background:#0c0c0c;padding:12px 10px}
+.m-val{font-size:20px;font-weight:bold;line-height:1}
+.m-label{font-size:10px;color:#444;margin-top:3px;letter-spacing:0.5px}
+.m-delta{font-size:10px;margin-top:2px}
+.detail{margin-bottom:14px}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #141414}
+.detail-row:last-child{border-bottom:none}
+.dk{font-size:11px;color:#484848}
+.dv{font-size:11px}
+.bar-row{display:flex;align-items:center;gap:8px}
+.btrack{width:60px;height:2px;background:#1e1e1e;border-radius:1px}
+.bfill{height:2px;border-radius:1px}
+.hint{font-size:10.5px;color:#383838;padding:8px 10px;border:1px solid #1e1e1e;border-radius:3px;border-left:2px solid #2e2e2e}
+.sep{border:none;border-top:1px solid #181818;margin:14px 0}
+.pill{display:inline-block;font-size:10px;padding:2px 7px;border-radius:2px;margin-right:4px}
+.g{color:#6db380}
+.y{color:#b8a060}
+.r{color:#b06060}
+.p{color:#8878bb}
+.dim{color:#3a3a3a}
+.sc{font-size:11px}
+.prog-label{display:flex;justify-content:space-between;margin-bottom:3px}
+.prog-track{height:3px;background:#1a1a1a;border-radius:2px;margin-bottom:10px}
+.prog-fill{height:3px;border-radius:2px}
+.loss-dots{display:flex;flex-wrap:wrap;gap:3px;margin:8px 0}
+.ld{width:6px;height:6px;border-radius:50%}
+.history-row{display:grid;grid-template-columns:90px 1fr 1fr 1fr;gap:6px;padding:4px 0;border-bottom:1px solid #141414;font-size:11px;align-items:center}
+.history-row:last-child{border-bottom:none}
+.trend{font-size:10px;margin-left:4px}
+.section-gap{margin-bottom:24px}
+</style>
+
+<div style="display:flex;flex-direction:column;gap:20px;padding:4px 0">
+
+  <div class="t section-gap">
+    <div class="bar"><div class="d" style="background:#ff5f57"></div><div class="d" style="background:#febc2e"></div><div class="d" style="background:#28c840"></div><span style="margin-left:auto;font-size:10px;color:#333">fastlane ping cloudflare.com</span></div>
+    <div class="body">
+      <div class="verdict">
+        <div class="verdict-icon" style="background:#1a2e1a;color:#6db380">&#10003;</div>
+        <div class="verdict-text">
+          <div class="verdict-title g">Connection is healthy</div>
+          <div class="verdict-sub">22 ms average &nbsp;&middot;&nbsp; no packet loss &nbsp;&middot;&nbsp; low jitter</div>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="m"><div class="m-val g">22ms</div><div class="m-label">AVG LATENCY</div></div>
+        <div class="m"><div class="m-val">51ms</div><div class="m-label">WORST CASE</div></div>
+        <div class="m"><div class="m-val g">3ms</div><div class="m-label">JITTER</div></div>
+      </div>
+      <div class="hint">p95 is 38 ms &mdash; occasional spikes but nothing consistent. Good for real-time use.</div>
+    </div>
+  </div>
+
+  <div class="t section-gap">
+    <div class="bar"><div class="d" style="background:#ff5f57"></div><div class="d" style="background:#febc2e"></div><div class="d" style="background:#28c840"></div><span style="margin-left:auto;font-size:10px;color:#333">fastlane loss 1.1.1.1</span></div>
+    <div class="body">
+      <div class="verdict">
+        <div class="verdict-icon" style="background:#2e2410;color:#b8a060">!</div>
+        <div class="verdict-text">
+          <div class="verdict-title y">Minor packet loss detected</div>
+          <div class="verdict-sub">2 of 50 packets dropped &nbsp;&middot;&nbsp; 4.0% loss &nbsp;&middot;&nbsp; not critical</div>
+        </div>
+      </div>
+      <div class="loss-dots" id="ldots"></div>
+      <div class="metrics" style="margin-top:12px">
+        <div class="m"><div class="m-val">50</div><div class="m-label">SENT</div></div>
+        <div class="m"><div class="m-val g">48</div><div class="m-label">RECEIVED</div></div>
+        <div class="m"><div class="m-val y">4.0%</div><div class="m-label">DROPPED</div></div>
+      </div>
+      <div class="hint" style="border-left-color:#4a3e1a;margin-top:12px">Under 5% is generally acceptable. Run again if you notice degraded performance.</div>
+    </div>
+  </div>
+
+  <div class="t section-gap">
+    <div class="bar"><div class="d" style="background:#ff5f57"></div><div class="d" style="background:#febc2e"></div><div class="d" style="background:#28c840"></div><span style="margin-left:auto;font-size:10px;color:#333">fastlane download</span></div>
+    <div class="body">
+      <div class="verdict">
+        <div class="verdict-icon" style="background:#1a2e1a;color:#6db380">&#10003;</div>
+        <div class="verdict-text">
+          <div class="verdict-title g">94.2 Mbps download</div>
+          <div class="verdict-sub">Stable &nbsp;&middot;&nbsp; 30s test &nbsp;&middot;&nbsp; 4 threads &nbsp;&middot;&nbsp; 353 MB transferred</div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="prog-label"><span class="sc dim">speed</span><span class="sc g">94.2 Mbps</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:94%;background:#6db380"></div></div>
+        <div class="prog-label"><span class="sc dim">consistency (ewma)</span><span class="sc">88.4 Mbps</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:88%;background:#4a6a4a"></div></div>
+      </div>
+      <div class="detail">
+        <div class="detail-row"><span class="dk">std deviation</span><span class="dv">4.1 Mbps &nbsp;<span class="dim sc">tight</span></span></div>
+        <div class="detail-row"><span class="dk">min / max</span><span class="dv">82.1 / 98.7 Mbps</span></div>
+        <div class="detail-row"><span class="dk">convergence</span><span class="dv g">yes &nbsp;<span class="dim sc">cv 0.044</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="t section-gap">
+    <div class="bar"><div class="d" style="background:#ff5f57"></div><div class="d" style="background:#febc2e"></div><div class="d" style="background:#28c840"></div><span style="margin-left:auto;font-size:10px;color:#333">fastlane test --server virginia</span></div>
+    <div class="body">
+      <div class="verdict">
+        <div class="verdict-icon" style="background:#1a2e1a;color:#6db380">&#10003;</div>
+        <div class="verdict-text">
+          <div class="verdict-title g">Your connection looks great</div>
+          <div class="verdict-sub">Virginia, USA &nbsp;&middot;&nbsp; 1,200 km &nbsp;&middot;&nbsp; 2026-04-28 16:35</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div class="prog-label"><span class="sc">download</span><span class="sc g">94.2 Mbps</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:94%;background:#6db380"></div></div>
+        <div class="prog-label"><span class="sc">upload</span><span class="sc p">78.0 Mbps</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:78%;background:#6a5a99"></div></div>
+        <div class="prog-label"><span class="sc">latency</span><span class="sc">22 ms</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:22%;background:#484848"></div></div>
+        <div class="prog-label"><span class="sc">packet loss</span><span class="sc g">0.0%</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:1%;background:#6db380"></div></div>
+      </div>
+      <div class="hint">All metrics within healthy range. No action needed.</div>
+    </div>
+  </div>
+
+  <div class="t">
+    <div class="bar"><div class="d" style="background:#ff5f57"></div><div class="d" style="background:#febc2e"></div><div class="d" style="background:#28c840"></div><span style="margin-left:auto;font-size:10px;color:#333">fastlane report</span></div>
+    <div class="body">
+      <div class="verdict">
+        <div class="verdict-icon" style="background:#1a2e1a;color:#6db380">&#8593;</div>
+        <div class="verdict-text">
+          <div class="verdict-title g">Performance improved since yesterday</div>
+          <div class="verdict-sub">Download +54% &nbsp;&middot;&nbsp; Upload +41% &nbsp;&middot;&nbsp; Latency -29%</div>
+        </div>
+      </div>
+      <div style="margin-bottom:4px">
+        <div class="history-row" style="color:#333;font-size:10px;letter-spacing:0.5px">
+          <span>DATE</span><span>DOWNLOAD</span><span>UPLOAD</span><span>PING</span>
+        </div>
+        <div class="history-row">
+          <span class="dim">today 16:35</span>
+          <span class="g">94.2 Mbps <span class="trend g">&#8593;</span></span>
+          <span class="p">78.0 Mbps <span class="trend g">&#8593;</span></span>
+          <span>22 ms <span class="trend g">&#8595;</span></span>
+        </div>
+        <div class="history-row">
+          <span class="dim">yesterday</span>
+          <span class="y">61.1 Mbps</span>
+          <span class="dim">55.4 Mbps</span>
+          <span class="dim">31 ms</span>
+        </div>
+        <div class="history-row">
+          <span class="dim">2 days ago</span>
+          <span class="g">88.7 Mbps</span>
+          <span class="dim">72.3 Mbps</span>
+          <span class="dim">19 ms</span>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="hint">Yesterday was an outlier. Current speeds are back to your baseline.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ld=document.getElementById('ldots');
+const lost=new Set([8,17]);
+for(let i=0;i<50;i++){
+  const d=document.createElement('div');
+  d.className='ld';
+  d.style.background=lost.has(i)?'#2e2e2e':'#3a5c3a';
+  if(lost.has(i))d.style.border='1px solid #333';
+  ld.appendChild(d);
+}
+</script>
