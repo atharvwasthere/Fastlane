@@ -7,8 +7,9 @@ assets\GeoLite2-City.mmdb
 bin/
 *.exe
 coverage.out
-
---DOCS--
+.rtk/
+~/.fastlane/
 
 .DS_Store
 skills-lock.json
+bash.exe.stackdump
