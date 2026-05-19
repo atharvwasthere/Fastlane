@@ -13,3 +13,7 @@ coverage.out
 .DS_Store
 skills-lock.json
 bash.exe.stackdump
+
+CLAUDE.md
+ACTION_PLAN.md
+TASKS.md
