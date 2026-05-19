@@ -1,26 +1,44 @@
-.PHONY: build test clean run lint fmt help
+.PHONY: build test bench clean run lint fmt help cross-build install dev-install version
 
-BINARY_NAME=fastlane
-GO=go
-GOFLAGS=-v
-OUT_DIR=./bin
+BINARY_NAME := fastlane
+GO          := go
+GOFLAGS     := -v
+OUT_DIR     := ./bin
+PKG         := github.com/atharvwasthere/Fastlane/cmd
+
+# Build-time metadata. VERSION defaults to the latest tag or "dev"; COMMIT to
+# the short SHA; DATE to UTC ISO-8601. Override on the command line:
+#   make build VERSION=0.2.0
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+
+LDFLAGS := -ldflags "-s -w \
+  -X '$(PKG).Version=$(VERSION)' \
+  -X '$(PKG).Commit=$(COMMIT)' \
+  -X '$(PKG).BuildDate=$(DATE)'"
 
 help:
 	@echo "Fastlane - Network Benchmarking CLI"
 	@echo ""
-	@echo "Available targets:"
-	@echo "  build       - Build fastlane binary"
-	@echo "  test        - Run all tests"
-	@echo "  bench       - Run benchmarks"
-	@echo "  lint        - Run linters (if available)"
-	@echo "  fmt         - Format code with gofmt"
-	@echo "  run         - Build and run fastlane"
-	@echo "  clean       - Remove build artifacts"
-	@echo "  help        - Show this message"
+	@echo "Targets:"
+	@echo "  build       Build $(BINARY_NAME) (with ldflags-injected version)"
+	@echo "  test        Run all tests with coverage"
+	@echo "  bench       Run benchmarks"
+	@echo "  lint        Run golangci-lint if installed"
+	@echo "  fmt         gofmt all packages"
+	@echo "  run         Build and run"
+	@echo "  cross-build linux-amd64, darwin-arm64, windows-amd64"
+	@echo "  clean       Remove $(OUT_DIR)"
+	@echo ""
+	@echo "Current build metadata:"
+	@echo "  VERSION=$(VERSION)"
+	@echo "  COMMIT=$(COMMIT)"
+	@echo "  DATE=$(DATE)"
 
 build:
-	@echo "Building $(BINARY_NAME)..."
-	$(GO) build $(GOFLAGS) -o $(OUT_DIR)/$(BINARY_NAME) .
+	@echo "Building $(BINARY_NAME) $(VERSION)..."
+	$(GO) build $(GOFLAGS) $(LDFLAGS) -o $(OUT_DIR)/$(BINARY_NAME) .
 
 test:
 	@echo "Running tests..."
@@ -33,7 +51,6 @@ bench:
 clean:
 	@echo "Cleaning..."
 	$(GO) clean
-	@rm -f $(OUT_DIR)/$(BINARY_NAME)
 	@rm -rf $(OUT_DIR)
 
 fmt:
@@ -41,26 +58,24 @@ fmt:
 	$(GO) fmt ./...
 
 lint:
-	@echo "Linting code..."
-	@which golangci-lint > /dev/null || echo "golangci-lint not installed. Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
-	@golangci-lint run ./... 2>/dev/null || true
+	@which golangci-lint > /dev/null || (echo "golangci-lint not installed"; exit 1)
+	@golangci-lint run ./...
 
 run: build
-	@echo "Running $(BINARY_NAME)..."
 	./$(OUT_DIR)/$(BINARY_NAME)
 
-# Development helpers
 dev-install:
-	@echo "Installing development dependencies..."
 	$(GO) mod download
 	$(GO) mod tidy
 
-cross-build: 
-	@echo "Building for multiple platforms..."
-	GOOS=linux GOARCH=amd64 $(GO) build -o $(OUT_DIR)/$(BINARY_NAME)-linux-amd64 .
-	GOOS=darwin GOARCH=arm64 $(GO) build -o $(OUT_DIR)/$(BINARY_NAME)-darwin-arm64 .
-	GOOS=windows GOARCH=amd64 $(GO) build -o $(OUT_DIR)/$(BINARY_NAME)-windows-amd64.exe .
-	@echo "Binaries built in $(OUT_DIR)/"
+cross-build:
+	@echo "Cross-building $(VERSION)..."
+	GOOS=linux   GOARCH=amd64 $(GO) build $(LDFLAGS) -o $(OUT_DIR)/$(BINARY_NAME)-linux-amd64 .
+	GOOS=darwin  GOARCH=amd64 $(GO) build $(LDFLAGS) -o $(OUT_DIR)/$(BINARY_NAME)-darwin-amd64 .
+	GOOS=darwin  GOARCH=arm64 $(GO) build $(LDFLAGS) -o $(OUT_DIR)/$(BINARY_NAME)-darwin-arm64 .
+	GOOS=linux   GOARCH=arm64 $(GO) build $(LDFLAGS) -o $(OUT_DIR)/$(BINARY_NAME)-linux-arm64 .
+	GOOS=windows GOARCH=amd64 $(GO) build $(LDFLAGS) -o $(OUT_DIR)/$(BINARY_NAME)-windows-amd64.exe .
+	@echo "Binaries in $(OUT_DIR)/"
 
 version:
 	@./$(OUT_DIR)/$(BINARY_NAME) version
