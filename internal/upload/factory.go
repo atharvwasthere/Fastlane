@@ -8,7 +8,7 @@ import (
 )
 
 // NewBenchEngine wraps the concrete upload Engine into a bench.Engine.
-// Mirrors internal/download/factory.go — same ctx-bridge pattern.
+// Mirrors internal/download/factory.go — engine is ctx-native.
 func NewBenchEngine(cfg Config) bench.Engine {
 	return &benchEngine{cfg: cfg, engine: NewEngine(cfg)}
 }
@@ -33,28 +33,12 @@ func (e *benchEngine) Snapshot() bench.Snapshot {
 
 func (e *benchEngine) Run(ctx context.Context) (bench.Result, error) {
 	started := time.Now()
-
-	type runResult struct {
-		res *Result
-		err error
+	res, err := e.engine.Run(ctx)
+	out := packResult(e.cfg, started, res)
+	if ctx.Err() != nil {
+		return out, ctx.Err()
 	}
-	done := make(chan runResult, 1)
-	go func() {
-		res, err := e.engine.Run()
-		done <- runResult{res, err}
-	}()
-
-	select {
-	case <-ctx.Done():
-		e.engine.Cancel()
-		out := <-done
-		return packResult(e.cfg, started, out.res), ctx.Err()
-	case out := <-done:
-		if out.err != nil {
-			return bench.Result{}, out.err
-		}
-		return packResult(e.cfg, started, out.res), nil
-	}
+	return out, err
 }
 
 func packResult(cfg Config, started time.Time, res *Result) bench.Result {
@@ -73,6 +57,10 @@ func packResult(cfg Config, started time.Time, res *Result) bench.Result {
 	r.Counters["bytes"] = res.BytesUploaded
 	r.Counters["threads"] = int64(res.Threads)
 	r.Counters["samples"] = int64(res.SamplesCollected)
+	r.Counters["errors"] = res.Errors
 	r.Flags["converged"] = res.Converged
+	if res.Errors > int64(res.SamplesCollected) {
+		r.Flags["degraded"] = true
+	}
 	return r
 }
