@@ -14,6 +14,8 @@ type CommandFlags struct {
 	Threads        int
 	SaveReport     bool
 	Server         string
+	AutoServer     bool
+	AdaptiveThreads bool
 	PreferLatency  bool
 	City           string
 	Coords         string
