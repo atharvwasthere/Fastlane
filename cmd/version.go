@@ -2,12 +2,20 @@ package cmd
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
-// versionCmd shows CLI version
+// Build-time injected. The Makefile passes -ldflags to set these; defaults
+// below let `go run .` still produce a sensible banner.
+var (
+	Version   = "dev"
+	Commit    = "unknown"
+	BuildDate = "unknown"
+)
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show CLI version",
@@ -17,9 +25,6 @@ var versionCmd = &cobra.Command{
 	},
 }
 
-// printVersionBanner prints the version info with ASCII art.
-// Logo and tagline stay (per user direction); version line will switch
-// to ldflags-injected values in Phase 12.
 func printVersionBanner() {
 	cyan := color.New(color.FgHiCyan).SprintFunc()
 	magenta := color.New(color.FgHiMagenta).SprintFunc()
@@ -38,9 +43,10 @@ func printVersionBanner() {
 	}
 
 	fmt.Printf("\n%s\n\n", magenta("Built for developers who hate lag."))
-	fmt.Printf("Fastlane v0.1.0\n")
-	fmt.Printf("Built with Go 1.24.4\n")
-	fmt.Printf("Cross-platform: Linux, macOS, Windows\n")
+	fmt.Printf("Fastlane %s\n", Version)
+	fmt.Printf("Commit:     %s\n", Commit)
+	fmt.Printf("Built:      %s\n", BuildDate)
+	fmt.Printf("Go runtime: %s (%s/%s)\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	fmt.Printf("https://github.com/atharvwasthere/Fastlane\n")
 }
 

@@ -20,13 +20,18 @@ var pingCmd = &cobra.Command{
 	Long:  `Measure network latency with breakdown (DNS, TCP, TLS, HTTP). Supports custom server selection.`,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+
 		host := pingFlags.Server
-		if host == "" {
-			if len(args) > 0 {
-				host = args[0]
-			} else {
-				host = "google.com"
-			}
+		switch {
+		case host != "":
+		case len(args) > 0:
+			host = args[0]
+		case pingFlags.AutoServer:
+			host = cmdint.AutoServerURL(ctx, "ping", "google.com")
+		default:
+			host = "google.com"
 		}
 
 		timeout := time.Duration(globalFlags.Timeout) * time.Second
@@ -34,16 +39,13 @@ var pingCmd = &cobra.Command{
 			timeout = 10 * time.Second
 		}
 
-		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-		defer stop()
-
 		engine := cmdint.PingEngine(cmdint.PingParams{
 			Host:       host,
 			Iterations: 5,
 			Timeout:    timeout,
 		})
 		renderer := cmdint.NewRenderer(globalFlags)
-		if err := cmdint.RunBench(ctx, "ping", host, engine, renderer); err != nil {
+		if err := cmdint.RunBench(ctx, "ping", host, engine, renderer, pingFlags.SaveReport); err != nil {
 			os.Exit(1)
 		}
 	},
@@ -51,6 +53,7 @@ var pingCmd = &cobra.Command{
 
 func init() {
 	pingCmd.Flags().StringVar(&pingFlags.Server, "server", "", "Target server host")
+	pingCmd.Flags().BoolVar(&pingFlags.AutoServer, "auto-server", false, "Pick nearest server via geoip + probing")
 	pingCmd.Flags().BoolVar(&pingFlags.SaveReport, "save-report", true, "Save report to file")
 	rootCmd.AddCommand(pingCmd)
 }

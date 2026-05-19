@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,21 +13,39 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var lossFlags config.CommandFlags
+var (
+	lossFlags config.CommandFlags
+	lossMode  string
+)
 
 var lossCmd = &cobra.Command{
 	Use:   "loss [host]",
 	Short: "Measure packet loss",
-	Long:  `Measure UDP packet loss with sequence tracking and jitter calculation.`,
-	Args:  cobra.MaximumNArgs(1),
+	Long: `Measure packet loss with HEAD probes (default) or UDP echo (LAN-only).
+
+Modes:
+  http   HEAD requests over HTTP/HTTPS. Cross-platform, public-internet safe. Default.
+  udp    UDP packets to a controlled echo server (port 9 by default). LAN-only —
+         port 7/9 is firewalled on every realistic public host.`,
+	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		host := lossFlags.Server
 		if host == "" {
 			if len(args) > 0 {
 				host = args[0]
 			} else {
-				host = "8.8.8.8"
+				host = defaultLossHost(lossMode)
 			}
+		}
+
+		switch lossMode {
+		case "http", "udp":
+			// ok
+		case "":
+			lossMode = "http"
+		default:
+			fmt.Fprintf(os.Stderr, "loss: unknown --mode %q (want http|udp)\n", lossMode)
+			os.Exit(2)
 		}
 
 		timeout := time.Duration(globalFlags.Timeout) * time.Second
@@ -38,8 +57,9 @@ var lossCmd = &cobra.Command{
 		defer stop()
 
 		engine := cmdint.LossEngine(cmdint.LossParams{
+			Mode:         lossMode,
 			Host:         host,
-			Port:         7,
+			Port:         9, // ignored for http
 			Count:        lossFlags.Count,
 			PacketSize:   32,
 			Rate:         lossFlags.Rate,
@@ -47,15 +67,24 @@ var lossCmd = &cobra.Command{
 			EnableJitter: true,
 		})
 		renderer := cmdint.NewRenderer(globalFlags)
-		if err := cmdint.RunBench(ctx, "loss", host, engine, renderer); err != nil {
+		if err := cmdint.RunBench(ctx, "loss", host, engine, renderer, lossFlags.SaveReport); err != nil {
 			os.Exit(1)
 		}
 	},
 }
 
+func defaultLossHost(mode string) string {
+	if mode == "udp" {
+		return "127.0.0.1"
+	}
+	return "https://www.cloudflare.com"
+}
+
 func init() {
-	lossCmd.Flags().StringVar(&lossFlags.Server, "server", "", "Target server host")
-	lossCmd.Flags().IntVar(&lossFlags.Count, "count", 100, "Number of packets to send")
-	lossCmd.Flags().IntVar(&lossFlags.Rate, "rate", 10, "Packets per second")
+	lossCmd.Flags().StringVar(&lossMode, "mode", "http", "Loss probe mode: http|udp")
+	lossCmd.Flags().StringVar(&lossFlags.Server, "server", "", "Target host (URL for http, host for udp)")
+	lossCmd.Flags().IntVar(&lossFlags.Count, "count", 100, "Number of probes to send")
+	lossCmd.Flags().IntVar(&lossFlags.Rate, "rate", 10, "Probes per second")
+	lossCmd.Flags().BoolVar(&lossFlags.SaveReport, "save-report", true, "Save report to file")
 	rootCmd.AddCommand(lossCmd)
 }

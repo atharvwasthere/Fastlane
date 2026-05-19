@@ -7,6 +7,7 @@ import (
 	"github.com/atharvwasthere/Fastlane/internal/download"
 	"github.com/atharvwasthere/Fastlane/internal/loss"
 	"github.com/atharvwasthere/Fastlane/internal/ping"
+	"github.com/atharvwasthere/Fastlane/internal/testsuite"
 	"github.com/atharvwasthere/Fastlane/internal/upload"
 )
 
@@ -37,10 +38,11 @@ type DownloadParams struct {
 	Threads      int
 	Timeout      time.Duration
 	TestDuration time.Duration
+	Adaptive     bool // hill-climb thread count before recording
 }
 
 func DownloadEngine(p DownloadParams) bench.Engine {
-	return download.NewBenchEngine(download.Config{
+	base := download.Config{
 		URL:            p.URL,
 		Threads:        p.Threads,
 		Timeout:        p.Timeout,
@@ -48,7 +50,11 @@ func DownloadEngine(p DownloadParams) bench.Engine {
 		CVThreshold:    0.03,
 		UpdateInterval: 100 * time.Millisecond,
 		MinSamples:     5,
-	})
+	}
+	if p.Adaptive {
+		return download.NewAdaptiveBenchEngine(download.DefaultAdaptive(base))
+	}
+	return download.NewBenchEngine(base)
 }
 
 type UploadParams struct {
@@ -72,6 +78,7 @@ func UploadEngine(p UploadParams) bench.Engine {
 }
 
 type LossParams struct {
+	Mode         string // "http" (default) | "udp"
 	Host         string
 	Port         int
 	Count        int
@@ -81,8 +88,56 @@ type LossParams struct {
 	EnableJitter bool
 }
 
+// TestParams configures the four-step test suite. URLs/hosts are resolved by
+// cmd/test.go before factory construction so the factory itself stays pure.
+type TestParams struct {
+	Host         string
+	DownloadURL  string
+	UploadURL    string
+	Threads      int
+	Timeout      time.Duration
+	TestDuration time.Duration
+	LossCount    int
+	LossRate     int
+}
+
+func TestEngine(p TestParams) bench.Engine {
+	return testsuite.NewEngine(testsuite.Config{
+		Server: p.Host,
+		Ping: PingEngine(PingParams{
+			Host:       p.Host,
+			Iterations: 5,
+			Timeout:    p.Timeout,
+		}),
+		Download: DownloadEngine(DownloadParams{
+			URL:          p.DownloadURL,
+			Threads:      p.Threads,
+			Timeout:      p.Timeout,
+			TestDuration: p.TestDuration,
+		}),
+		Upload: UploadEngine(UploadParams{
+			URL:          p.UploadURL,
+			Threads:      p.Threads,
+			Timeout:      p.Timeout,
+			TestDuration: p.TestDuration,
+		}),
+		Loss: LossEngine(LossParams{
+			Mode:    "http",
+			Host:    p.DownloadURL,
+			Count:   p.LossCount,
+			Rate:    p.LossRate,
+			Timeout: p.Timeout,
+		}),
+	})
+}
+
 func LossEngine(p LossParams) bench.Engine {
+	mode := loss.Mode(p.Mode)
+	if mode == "" {
+		mode = loss.ModeHTTP
+	}
 	return loss.NewBenchEngine(loss.Config{
+		Mode:         mode,
 		Host:         p.Host,
 		Port:         p.Port,
 		Count:        p.Count,

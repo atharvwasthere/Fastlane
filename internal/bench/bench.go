@@ -19,6 +19,7 @@ const (
 	KindDownload Kind = "download"
 	KindUpload   Kind = "upload"
 	KindLoss     Kind = "loss"
+	KindTest     Kind = "test"
 )
 
 // Engine is the canonical contract: take a context, return a Result or error.

@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/atharvwasthere/Fastlane/internal/config"
+	"github.com/atharvwasthere/Fastlane/internal/logging"
 	"github.com/atharvwasthere/Fastlane/pkg/ui"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
@@ -13,7 +16,6 @@ import (
 
 var (
 	globalFlags config.GlobalFlags
-	saveReport  bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -22,14 +24,33 @@ var rootCmd = &cobra.Command{
 	Short: "Fastlane ▸ Network benchmarking made simple.",
 	Long: `Fastlane is a modular, cross-platform CLI tool for network benchmarking.
 Measure latency, download/upload speeds, and packet loss with JSON or text output.`,
-	Version: "0.1.0",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	Version: Version,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// Resolve config with precedence: flag > env > file > defaults.
+		changed := config.ChangedFlags{
+			JSON:    cmd.Flags().Changed("json"),
+			Verbose: cmd.Flags().Changed("verbose"),
+			Timeout: cmd.Flags().Changed("timeout"),
+			Debug:   cmd.Flags().Changed("debug"),
+			NoColor: cmd.Flags().Changed("no-color"),
+		}
+		merged, err := config.Load(globalFlags, changed)
+		if err != nil {
+			return fmt.Errorf("load config: %w", err)
+		}
+		globalFlags = merged
+
+		// Initialize logger AFTER config merge so --debug/--verbose from any
+		// source flows through. JSON mode mutes the logger entirely.
+		slog.SetDefault(logging.Init(globalFlags))
+
 		// Honor --no-color and the NO_COLOR convention (https://no-color.org).
 		// JSON output is structured data — never colored regardless.
 		if globalFlags.NoColor || os.Getenv("NO_COLOR") != "" || globalFlags.JSON {
 			color.NoColor = true
 			lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(os.Stdout, termenv.WithProfile(termenv.Ascii)))
 		}
+		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		printer := ui.NewPrinter(globalFlags.Verbose)
