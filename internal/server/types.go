@@ -2,15 +2,17 @@ package server
 
 // Server represents a test server
 type Server struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	Host     string  `json:"host"`
-	IP       string  `json:"ip"`
-	Location string  `json:"location"`
-	Country  string  `json:"country"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Port     int     `json:"port"`
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	Host         string  `json:"host"`
+	IP           string  `json:"ip,omitempty"`
+	Location     string  `json:"location"`
+	Country      string  `json:"country"`
+	Latitude     float64 `json:"latitude"`
+	Longitude    float64 `json:"longitude"`
+	Port         int     `json:"port"`
+	DownloadPath string  `json:"download_path,omitempty"`
+	UploadPath   string  `json:"upload_path,omitempty"`
 }
 
 // ServerWithMetrics extends Server with computed metrics
@@ -25,8 +27,10 @@ type ServerWithMetrics struct {
 
 // ServerList represents a collection of servers
 type ServerList struct {
-	Servers []Server `json:"servers"`
+	Version int      `json:"version"`
 	Updated string   `json:"updated"`
+	Source  string   `json:"source"`
+	Servers []Server `json:"servers"`
 }
 
 // SelectionCriteria holds filtering options
