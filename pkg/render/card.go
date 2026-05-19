@@ -5,6 +5,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/atharvwasthere/Fastlane/internal/bench"
 	"github.com/atharvwasthere/Fastlane/internal/format"
@@ -81,7 +82,11 @@ func (c *cardRenderer) buildBody(r bench.Result, v verdict) string {
 		titleStyle.Render(v.icon),
 		titleStyle.Render(v.title),
 	)
-	subtitle := subStyle.Render(buildSubtitle(r))
+	sub := buildSubtitle(r)
+	if len(r.Notes) > 0 {
+		sub = sub + " · " + strings.Join(r.Notes, " · ")
+	}
+	subtitle := subStyle.Render(sub)
 
 	grid := buildGrid(r, cols, innerW)
 
@@ -161,12 +166,50 @@ func classify(r bench.Result) verdict {
 		default:
 			return verdict{"✗", colorRed, "High packet loss"}
 		}
+	case bench.KindTest:
+		// Verdict tone follows the rating note set by the testsuite engine.
+		// Falls back to a neutral mark if no rating is attached.
+		rating := ratingFromNotes(r.Notes)
+		switch rating {
+		case "EXCELLENT":
+			return verdict{"✓", colorGreen, "Connection is excellent"}
+		case "GOOD":
+			return verdict{"✓", colorGreen, "Connection is good"}
+		case "FAIR":
+			return verdict{"!", colorYellow, "Connection is fair"}
+		case "POOR":
+			return verdict{"✗", colorRed, "Connection is poor"}
+		default:
+			return verdict{"·", colorDim, "Suite complete"}
+		}
 	}
 	return verdict{"·", colorDim, string(r.Kind)}
 }
 
+// ratingFromNotes pulls the "rating=X" annotation prepended by testsuite.Run.
+func ratingFromNotes(notes []string) string {
+	for _, n := range notes {
+		if strings.HasPrefix(n, "rating=") {
+			return strings.TrimPrefix(n, "rating=")
+		}
+	}
+	return ""
+}
+
 // buildSubtitle fills the dot-separated facts line under the verdict.
 func buildSubtitle(r bench.Result) string {
+	base := subtitleFor(r)
+	// Annotate degraded results so the user sees the error count inline.
+	// Triggered when errors swamp the useful sample count.
+	if r.Flags["degraded"] {
+		if n, ok := r.Counters["errors"]; ok && n > 0 {
+			base = fmt.Sprintf("%s · degraded (%d errors)", base, n)
+		}
+	}
+	return base
+}
+
+func subtitleFor(r bench.Result) string {
 	switch r.Kind {
 	case bench.KindPing:
 		return fmt.Sprintf("%.0f ms average · jitter %.1f ms · %d samples",
@@ -183,6 +226,9 @@ func buildSubtitle(r bench.Result) string {
 		return fmt.Sprintf("%d/%d packets · %.2f%% loss · jitter %.1f ms",
 			r.Counters["packets_received"], r.Counters["packets_sent"],
 			r.Metrics["loss_percent"], r.Metrics["jitter_ms"])
+	case bench.KindTest:
+		return fmt.Sprintf("rating %s · ran %s",
+			ratingFromNotes(r.Notes), r.Duration.Round(time.Second))
 	}
 	return ""
 }
@@ -269,6 +315,13 @@ func metricCells(r bench.Result) []cell {
 			{fmt.Sprintf("%.1f%%", r.Metrics["loss_percent"]), "LOSS"},
 			{fmt.Sprintf("%d", r.Counters["packets_lost"]), "DROPPED"},
 			{fmt.Sprintf("%.1fms", r.Metrics["jitter_ms"]), "JITTER"},
+		}
+	case bench.KindTest:
+		return []cell{
+			{fmt.Sprintf("%.0fms", r.Metrics["latency_ms"]), "PING"},
+			{format.Mbps(r.Metrics["download_mbps"]), "DOWN"},
+			{format.Mbps(r.Metrics["upload_mbps"]), "UP"},
+			{fmt.Sprintf("%.1f%%", r.Metrics["loss_percent"]), "LOSS"},
 		}
 	}
 	// Fallback: dump sorted Metrics keys.

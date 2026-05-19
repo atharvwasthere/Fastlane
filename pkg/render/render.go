@@ -57,3 +57,30 @@ func New(format Format, w io.Writer, opts Options) Renderer {
 		return newCardRenderer(w, opts)
 	}
 }
+
+// IsCard reports whether r is the live-capable card renderer (Phase 4 picks
+// the bubbletea live path only when this is true).
+func IsCard(r Renderer) bool {
+	_, ok := r.(*cardRenderer)
+	return ok
+}
+
+// CardOptions returns the Options used to build r if it is a card renderer.
+// Used by the live pump to size the bubbletea program identically.
+func CardOptions(r Renderer) (Options, bool) {
+	c, ok := r.(*cardRenderer)
+	if !ok {
+		return Options{}, false
+	}
+	return c.opts, true
+}
+
+// CardWriter returns the writer the card renderer prints to (used by the
+// bubbletea live program so live + final share an output stream).
+func CardWriter(r Renderer) (io.Writer, bool) {
+	c, ok := r.(*cardRenderer)
+	if !ok {
+		return nil, false
+	}
+	return c.w, true
+}
