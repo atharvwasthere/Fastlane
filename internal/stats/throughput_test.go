@@ -88,3 +88,14 @@ func TestSamplerFallsBackWithinWarmUp(t *testing.T) {
 		t.Fatal("warm-up ticks must not become steady samples")
 	}
 }
+
+func TestSamplerMbpsNeverNegative(t *testing.T) {
+	t0 := time.Unix(0, 0)
+	s := NewSampler(0, 1000, 0.03)
+	s.Start(t0)
+	now, _ := feed(s, t0, 5, func(int) float64 { return 50 })
+	// Every counted byte rolled back (a rejected upload) after the steady origin was set.
+	if got := s.Mbps(now, 0); got != 0 {
+		t.Fatalf("Mbps after full rollback = %.2f, want 0", got)
+	}
+}

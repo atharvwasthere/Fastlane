@@ -112,7 +112,8 @@ func (s *Sampler) Mbps(now time.Time, bytes int64) float64 {
 		from, base = s.steadyAt, s.steadyBytes
 	}
 	secs := now.Sub(from).Seconds()
-	if secs <= 0 {
+	// An upload rollback can take the counter below the steady origin.
+	if secs <= 0 || bytes <= base {
 		return 0
 	}
 	return float64((bytes-base)*8) / 1e6 / secs

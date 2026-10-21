@@ -1,7 +1,6 @@
 package upload
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"io"
@@ -41,7 +40,7 @@ type Config struct {
 	MinSamples     int           // Minimum steady-state samples before convergence check (default 20)
 	TestDuration   time.Duration // Maximum test duration (default 60s)
 	WarmUp         time.Duration // Discarded ramp-up window, capped at TestDuration/3 (default 1s)
-	ChunkSize      int64         // Size of each upload request body in bytes (default 1MB)
+	ChunkSize      int64         // Size of each upload request body in bytes (default 25MB)
 }
 
 // Engine manages the upload test. Workers add bytes to one atomic counter
@@ -77,8 +76,10 @@ func NewEngine(config Config) *Engine {
 		config.WarmUp = time.Second
 	}
 	config.WarmUp = min(config.WarmUp, config.TestDuration/3)
+	// Each request waits a full RTT for its response with the pipe idle; 1MB at
+	// 100 Mbps is ~84ms of sending per ~RTT of waiting. 25MB keeps it busy.
 	if config.ChunkSize == 0 {
-		config.ChunkSize = 1024 * 1024 // 1MB default
+		config.ChunkSize = 25_000_000
 	}
 
 	return &Engine{
@@ -132,15 +133,15 @@ func (e *Engine) worker(ctx context.Context, threadID int) {
 	defer transport.CloseIdleConnections()
 	client := &http.Client{Transport: transport}
 
-	// Pre-allocate one random buffer per worker, reuse across requests.
+	// One small random buffer per worker, repeated to fill the body.
 	// math/rand is fine here — payload entropy is irrelevant to bandwidth.
-	buffer := make([]byte, e.config.ChunkSize)
+	buffer := make([]byte, min(e.config.ChunkSize, 1<<20))
 	rng := rand.New(rand.NewSource(time.Now().UnixNano() ^ int64(threadID)))
 	rng.Read(buffer)
 
 	for ctx.Err() == nil {
 		var reqBytes int64
-		body := stats.CountingReader{R: stats.CountingReader{R: bytes.NewReader(buffer), N: &reqBytes}, N: &e.bytesUploaded}
+		body := stats.CountingReader{R: stats.CountingReader{R: io.LimitReader(&repeatReader{buf: buffer}, e.config.ChunkSize), N: &reqBytes}, N: &e.bytesUploaded}
 		req, err := http.NewRequestWithContext(ctx, "POST", e.config.URL, body)
 		if err != nil {
 			atomic.AddInt64(&e.errCount, 1)
@@ -168,6 +169,18 @@ func (e *Engine) worker(ctx context.Context, threadID int) {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
+}
+
+// repeatReader serves buf over and over, so a large body needs one small buffer.
+type repeatReader struct {
+	buf []byte
+	off int
+}
+
+func (r *repeatReader) Read(p []byte) (int, error) {
+	n := copy(p, r.buf[r.off:])
+	r.off = (r.off + n) % len(r.buf)
+	return n, nil
 }
 
 // buildResult creates the final result
