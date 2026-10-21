@@ -64,16 +64,16 @@ func MeasureLayered(ctx context.Context, host string, iterations int, timeout ti
 			result.Errors++
 		}
 		// Keep layers that completed even if a later one failed (e.g. TCP ok, TLS cert bad).
-		if p.dns > 0 {
+		if p.dnsOK {
 			dnsS = append(dnsS, p.dns)
 		}
-		if p.tcp > 0 {
+		if p.tcpOK {
 			result.Samples = append(result.Samples, p.tcp)
 		}
-		if p.tls > 0 {
+		if p.tlsOK {
 			tlsS = append(tlsS, p.tls)
 		}
-		if p.ttfb > 0 {
+		if p.ttfbOK {
 			ttfbS = append(ttfbS, p.ttfb)
 		}
 	}
@@ -93,7 +93,10 @@ func MeasureLayered(ctx context.Context, host string, iterations int, timeout ti
 	return result, nil
 }
 
-type phases struct{ dns, tcp, tls, ttfb float64 }
+type phases struct {
+	dns, tcp, tls, ttfb         float64
+	dnsOK, tcpOK, tlsOK, ttfbOK bool // a coarse clock (Windows) can time a real phase as 0 ms, so 0 can't mean "absent"
+}
 
 // probe runs one request and returns the duration of each phase it reached.
 func probe(ctx context.Context, client *http.Client, target string) (phases, error) {
@@ -106,7 +109,7 @@ func probe(ctx context.Context, client *http.Client, target string) (phases, err
 	// Callbacks can run on dialer goroutines (Happy Eyeballs races IPv4/IPv6), so guard everything.
 	trace := &httptrace.ClientTrace{
 		DNSStart: func(httptrace.DNSStartInfo) { mu.Lock(); dnsStart = time.Now(); mu.Unlock() },
-		DNSDone:  func(httptrace.DNSDoneInfo) { mu.Lock(); p.dns = sinceMS(dnsStart); mu.Unlock() },
+		DNSDone:  func(httptrace.DNSDoneInfo) { mu.Lock(); p.dns, p.dnsOK = sinceMS(dnsStart), true; mu.Unlock() },
 		ConnectStart: func(_, addr string) {
 			mu.Lock()
 			connStart[addr] = time.Now()
@@ -114,8 +117,8 @@ func probe(ctx context.Context, client *http.Client, target string) (phases, err
 		},
 		ConnectDone: func(_, addr string, err error) {
 			mu.Lock()
-			if err == nil && p.tcp == 0 {
-				p.tcp = sinceMS(connStart[addr]) // per-address start: the winning dial, not the first one tried
+			if err == nil && !p.tcpOK {
+				p.tcp, p.tcpOK = sinceMS(connStart[addr]), true // per-address start: the winning dial, not the first one tried
 			}
 			mu.Unlock()
 		},
@@ -123,12 +126,12 @@ func probe(ctx context.Context, client *http.Client, target string) (phases, err
 		TLSHandshakeDone: func(_ tls.ConnectionState, err error) {
 			mu.Lock()
 			if err == nil {
-				p.tls = sinceMS(tlsStart)
+				p.tls, p.tlsOK = sinceMS(tlsStart), true
 			}
 			mu.Unlock()
 		},
 		WroteRequest:         func(httptrace.WroteRequestInfo) { mu.Lock(); wrote = time.Now(); mu.Unlock() },
-		GotFirstResponseByte: func() { mu.Lock(); p.ttfb = sinceMS(wrote); mu.Unlock() },
+		GotFirstResponseByte: func() { mu.Lock(); p.ttfb, p.ttfbOK = sinceMS(wrote), true; mu.Unlock() },
 	}
 
 	req, err := http.NewRequestWithContext(httptrace.WithClientTrace(ctx, trace), http.MethodGet, target, nil)

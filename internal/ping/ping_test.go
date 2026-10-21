@@ -29,7 +29,7 @@ func TestMeasureLayeredSeparatesLayers(t *testing.T) {
 	if len(res.Samples) != 3 {
 		t.Fatalf("want one TCP sample per probe (fresh connections), got %d", len(res.Samples))
 	}
-	if res.TCPLatencyMS <= 0 || res.TCPLatencyMS >= 30 {
+	if res.TCPLatencyMS < 0 || res.TCPLatencyMS >= 30 { // 0 is valid: Windows' clock can't resolve a loopback connect
 		t.Fatalf("TCP connect %.2f ms should be loopback-fast and exclude server time", res.TCPLatencyMS)
 	}
 	if res.HTTPLatencyMS < 30 {
