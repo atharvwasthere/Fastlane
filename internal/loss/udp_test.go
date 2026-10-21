@@ -326,3 +326,39 @@ func TestEngineCompleteLoss(t *testing.T) {
 		t.Errorf("Expected 100 lost packets, got %d", result.PacketsLost)
 	}
 }
+
+// TestEngineDuplicateEchoes checks each sequence counts once and extra echoes can't wedge the receiver.
+func TestEngineDuplicateEchoes(t *testing.T) {
+	conn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	go func() {
+		buf := make([]byte, 1500)
+		for {
+			n, from, err := conn.ReadFromUDP(buf)
+			if err != nil {
+				return
+			}
+			for i := 0; i < 3; i++ { // 3x the expected echoes overflowed the old Count-sized channel
+				conn.WriteToUDP(buf[:n], from)
+			}
+		}
+	}()
+
+	engine := NewUDPEngine(Config{Host: "127.0.0.1", Port: conn.LocalAddr().(*net.UDPAddr).Port, Count: 10, Rate: 50, Timeout: 5 * time.Second})
+	done := make(chan *Result, 1)
+	go func() {
+		r, _ := engine.Run(context.Background())
+		done <- r
+	}()
+	select {
+	case r := <-done:
+		if r.PacketsReceived != r.PacketsSent || r.LossPercent != 0 {
+			t.Fatalf("duplicates miscounted: sent=%d received=%d loss=%.1f%%", r.PacketsSent, r.PacketsReceived, r.LossPercent)
+		}
+	case <-time.After(4 * time.Second):
+		t.Fatal("Run did not return: receiver blocked")
+	}
+}

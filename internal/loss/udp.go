@@ -107,16 +107,10 @@ func (e *UDPEngine) Run(ctx context.Context) (*Result, error) {
 	}
 	defer conn.Close()
 	
-	// doneChan signals the receiver to stop. The receiver owns ackChan and
-	// closes it on the way out, so we never close from the sender side
-	// (which would race the receiver's send and panic).
-	ackChan := make(chan int64, e.config.Count)
-	doneChan := make(chan struct{})
+	done := make(chan struct{})
 	receiverDone := make(chan struct{})
-
 	go func() {
-		e.receiver(conn, ackChan, doneChan)
-		close(ackChan)
+		e.receiver(conn, done)
 		close(receiverDone)
 	}()
 
@@ -127,37 +121,31 @@ func (e *UDPEngine) Run(ctx context.Context) (*Result, error) {
 	testCtx, cancel := context.WithTimeout(ctx, e.config.Timeout)
 	defer cancel()
 
-	var seq int64
 sendLoop:
-	for seq = 0; seq < int64(e.config.Count); seq++ {
+	for seq := int64(0); seq < int64(e.config.Count); seq++ {
 		select {
 		case <-testCtx.Done():
 			break sendLoop
 		case <-ticker.C:
-			packet := e.createPacket(seq)
-			if _, werr := conn.Write(packet); werr != nil {
-				e.mu.Lock()
-				e.errCount++
-				e.mu.Unlock()
-			}
+			_, werr := conn.Write(e.createPacket(seq))
 			e.mu.Lock()
-			e.sent++
+			if werr != nil {
+				e.errCount++ // never left the host: an error, not a sent probe
+			} else {
+				e.sent++
+			}
 			e.mu.Unlock()
 		}
 	}
 
-	// Give late responses a moment to land, then signal the receiver to exit.
-	// Unblocking the blocking ReadFromUDP requires bumping the deadline.
+	// Give late echoes a moment to land, then stop the receiver.
 	select {
 	case <-testCtx.Done():
 	case <-time.After(time.Second):
 	}
-	close(doneChan)
+	close(done)
 	_ = conn.SetReadDeadline(time.Now())
 	<-receiverDone
-	for range ackChan {
-		// drain
-	}
 
 	return e.buildResult(time.Since(startTime)), nil
 }
@@ -176,23 +164,23 @@ func (e *UDPEngine) createPacket(seq int64) []byte {
 	return packet
 }
 
-// receiver listens for echo/response packets
-func (e *UDPEngine) receiver(conn *net.UDPConn, ackChan chan<- int64, done <-chan struct{}) {
+// receiver counts each echoed sequence number once until done closes.
+func (e *UDPEngine) receiver(conn *net.UDPConn, done <-chan struct{}) {
 	buffer := make([]byte, 1500) // MTU size
-	conn.SetReadDeadline(time.Now().Add(e.config.Timeout))
-	
+	seen := make(map[int64]bool, e.config.Count)
+
 	for {
 		select {
 		case <-done:
 			return
 		default:
 		}
-		
+
+		// Short per-read deadline: a single long one would spin on instant timeouts once it passed.
+		_ = conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
 		n, _, err := conn.ReadFromUDP(buffer)
 		if err != nil {
-			// Discriminate timeouts (expected for UDP) from real errors.
-			// net.Error.Timeout() catches deadline exceeded; everything else
-			// (e.g. ECONNREFUSED on Windows) gets counted.
+			// Timeouts are expected for UDP; anything else (e.g. ECONNREFUSED) is counted.
 			if ne, ok := err.(net.Error); !ok || !ne.Timeout() {
 				e.mu.Lock()
 				e.errCount++
@@ -200,29 +188,26 @@ func (e *UDPEngine) receiver(conn *net.UDPConn, ackChan chan<- int64, done <-cha
 			}
 			continue
 		}
-		
 		if n < 16 {
 			continue // Invalid packet
 		}
-		
-		// Extract sequence number and timestamp
+
 		seq := int64(binary.BigEndian.Uint64(buffer[0:8]))
-		_ = int64(binary.BigEndian.Uint64(buffer[8:16])) // sentTime (unused for now)
+		// Duplicates and foreign packets would push received past sent (negative loss).
+		if seq < 0 || seq >= int64(e.config.Count) || seen[seq] {
+			continue
+		}
+		seen[seq] = true
 		recvTime := time.Now()
-		
+
 		e.mu.Lock()
 		e.received++
 		e.arrivalTimes = append(e.arrivalTimes, recvTime)
-		
-		// Track inter-arrival times for jitter
 		if e.config.EnableJitter && len(e.arrivalTimes) > 1 {
 			lastArrival := e.arrivalTimes[len(e.arrivalTimes)-2]
-			interArrival := recvTime.Sub(lastArrival).Seconds() * 1000 // ms
-			e.interArrivals = append(e.interArrivals, interArrival)
+			e.interArrivals = append(e.interArrivals, recvTime.Sub(lastArrival).Seconds()*1000)
 		}
 		e.mu.Unlock()
-		
-		ackChan <- seq
 	}
 }
 
