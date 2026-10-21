@@ -455,12 +455,16 @@ func TestEngineRejectedUploadNotCounted(t *testing.T) {
 	go http.Serve(listener, mux)
 	defer listener.Close()
 
-	engine := NewEngine(Config{URL: "http://" + listener.Addr().String() + "/upload", Threads: 2, TestDuration: 500 * time.Millisecond})
+	// Small bodies so many requests complete and get rejected inside the run.
+	const chunk = 64 * 1024
+	engine := NewEngine(Config{URL: "http://" + listener.Addr().String() + "/upload", Threads: 2, TestDuration: 500 * time.Millisecond, ChunkSize: chunk})
 	result, _ := engine.Run(context.Background())
-	if result.BytesUploaded != 0 || result.FinalMbps != 0 {
-		t.Fatalf("403 upload counted: bytes=%d mbps=%.3f", result.BytesUploaded, result.FinalMbps)
+	if result.Errors < 10 {
+		t.Fatalf("expected many 403s counted as errors, got %d", result.Errors)
 	}
-	if result.Errors == 0 {
-		t.Fatal("expected 403 responses to be counted as errors")
+	// Live counting keeps bytes of bodies still in flight at shutdown (their
+	// verdict never arrived); everything rejected before that was taken back.
+	if max := int64(2 * chunk); result.BytesUploaded > max {
+		t.Fatalf("rejected uploads counted: bytes=%d, want <= %d (in-flight bodies only)", result.BytesUploaded, max)
 	}
 }
