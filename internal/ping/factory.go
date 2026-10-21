@@ -14,8 +14,9 @@ type BenchConfig struct {
 	Timeout    time.Duration
 }
 
-// NewBenchEngine returns a bench.Engine that runs MeasureLayered + Pauta
-// filtering and packs the output into a bench.Result.
+// NewBenchEngine returns a bench.Engine that runs MeasureLayered and packs the
+// output into a bench.Result. The Pauta filter only counts outliers; the
+// reported stats use the raw samples.
 func NewBenchEngine(cfg BenchConfig) bench.Engine {
 	if cfg.Iterations <= 0 {
 		cfg.Iterations = 5

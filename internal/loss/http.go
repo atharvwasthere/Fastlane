@@ -142,7 +142,8 @@ func (e *HTTPEngine) buildResult(duration time.Duration) *Result {
 
 	min, avg, max, jitter := rttStats(e.rtts)
 
-	notes := append([]string(nil), e.notes...)
+	// TCP retransmits hide real packet loss, so name what is actually counted.
+	notes := append([]string{"loss = HTTP probes slower than 2s"}, e.notes...)
 	if errCount > 0 {
 		notes = append(notes, "non-loss errors: connection failures excluded from loss%")
 	}
