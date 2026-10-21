@@ -138,3 +138,22 @@ func TestNormalizeURL(t *testing.T) {
 		}
 	}
 }
+
+// TestHTTPEngineHighRTTNotLoss: a consistently slow (satellite-like) server
+// must not read as loss just because each round trip exceeds 2s.
+func TestHTTPEngineHighRTTNotLoss(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(2200 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	e := NewHTTPEngine(Config{Host: srv.URL, Count: 3, Rate: 10, Timeout: 30 * time.Second})
+	res, err := e.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run failed: %v", err)
+	}
+	if res.LossPercent != 0 || res.PacketsReceived != 3 {
+		t.Fatalf("slow-but-steady link read as loss: received=%d loss=%.1f%%", res.PacketsReceived, res.LossPercent)
+	}
+}
