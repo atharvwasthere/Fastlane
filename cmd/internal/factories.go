@@ -36,17 +36,15 @@ func PingEngine(p PingParams) bench.Engine {
 type DownloadParams struct {
 	URL          string
 	Threads      int
-	Timeout      time.Duration
 	TestDuration time.Duration
 	Adaptive     bool // hill-climb thread count before recording
 }
 
 func DownloadEngine(p DownloadParams) bench.Engine {
 	base := download.Config{
-		URL:            p.URL,
-		Threads:        p.Threads,
-		Timeout:        p.Timeout,
-		TestDuration:   p.TestDuration,
+		URL:          p.URL,
+		Threads:      p.Threads,
+		TestDuration: p.TestDuration,
 	}
 	if p.Adaptive {
 		return download.NewAdaptiveBenchEngine(download.DefaultAdaptive(base))
@@ -57,16 +55,14 @@ func DownloadEngine(p DownloadParams) bench.Engine {
 type UploadParams struct {
 	URL          string
 	Threads      int
-	Timeout      time.Duration
 	TestDuration time.Duration
 }
 
 func UploadEngine(p UploadParams) bench.Engine {
 	return upload.NewBenchEngine(upload.Config{
-		URL:            p.URL,
-		Threads:        p.Threads,
-		Timeout:        p.Timeout,
-		TestDuration:   p.TestDuration,
+		URL:          p.URL,
+		Threads:      p.Threads,
+		TestDuration: p.TestDuration,
 	})
 }
 
@@ -105,13 +101,11 @@ func TestEngine(p TestParams) bench.Engine {
 		Download: DownloadEngine(DownloadParams{
 			URL:          p.DownloadURL,
 			Threads:      p.Threads,
-			Timeout:      p.Timeout,
 			TestDuration: p.TestDuration,
 		}),
 		Upload: UploadEngine(UploadParams{
 			URL:          p.UploadURL,
 			Threads:      p.Threads,
-			Timeout:      p.Timeout,
 			TestDuration: p.TestDuration,
 		}),
 		Loss: LossEngine(LossParams{

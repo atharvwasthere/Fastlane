@@ -90,9 +90,6 @@ func (a *adaptiveEngine) Run(ctx context.Context) (bench.Result, error) {
 	finalCfg := a.cfg.Base
 	finalCfg.Threads = best
 	finalCfg.TestDuration = a.cfg.FinalRunDuration
-	if finalCfg.Timeout < a.cfg.FinalRunDuration {
-		finalCfg.Timeout = a.cfg.FinalRunDuration + 2*time.Second
-	}
 
 	started := time.Now()
 	res, err := NewEngine(finalCfg).Run(ctx)
@@ -139,9 +136,6 @@ func (a *adaptiveEngine) probe(ctx context.Context, threads int, dur time.Durati
 	cfg := a.cfg.Base
 	cfg.Threads = threads
 	cfg.TestDuration = dur
-	if cfg.Timeout < dur {
-		cfg.Timeout = dur + 2*time.Second
-	}
 	res, err := NewEngine(cfg).Run(ctx)
 	if err != nil {
 		return 0, err

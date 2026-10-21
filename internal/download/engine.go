@@ -33,7 +33,6 @@ type Result struct {
 type Config struct {
 	URL            string        // Download URL (typically large file or stream)
 	Threads        int           // Number of concurrent streams (default 4)
-	Timeout        time.Duration // Overall test timeout (default 30s)
 	RSEThreshold   float64       // Stop when the mean's relative standard error (CV/√n) is below this (default 0.03)
 	UpdateInterval time.Duration // Sampling interval (default 100ms)
 	MinSamples     int           // Minimum steady-state samples before convergence check (default 20)
@@ -54,9 +53,6 @@ type Engine struct {
 func NewEngine(config Config) *Engine {
 	if config.Threads <= 0 {
 		config.Threads = 4
-	}
-	if config.Timeout == 0 {
-		config.Timeout = 30 * time.Second
 	}
 	if config.RSEThreshold == 0 {
 		config.RSEThreshold = 0.03

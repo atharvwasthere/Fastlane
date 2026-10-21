@@ -30,19 +30,17 @@ var downloadCmd = &cobra.Command{
 		case downloadFlags.AutoServer:
 			server = cmdint.AutoServerURL(ctx, "download", "https://speed.cloudflare.com"+cmdint.DownloadPath)
 		default:
-			server = "https://speed.cloudflare.com"+cmdint.DownloadPath
+			server = "https://speed.cloudflare.com" + cmdint.DownloadPath
 		}
 
 		testDuration := time.Duration(globalFlags.Timeout) * time.Second
 		if testDuration == 0 {
 			testDuration = 60 * time.Second
 		}
-		timeout := testDuration
 
 		engine := cmdint.DownloadEngine(cmdint.DownloadParams{
 			URL:          server,
 			Threads:      downloadFlags.Threads,
-			Timeout:      timeout,
 			TestDuration: testDuration,
 			Adaptive:     downloadFlags.AdaptiveThreads,
 		})

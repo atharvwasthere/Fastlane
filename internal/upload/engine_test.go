@@ -48,7 +48,6 @@ func TestEngineBasicUpload(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
 		RSEThreshold:   0.03,
 		MinSamples:    3,
@@ -105,7 +104,6 @@ func TestEngineMultiThreading(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       4,
-		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second,
 		RSEThreshold:   0.03,
 		MinSamples:    2,
@@ -127,7 +125,6 @@ func TestEngineConvergenceDetection(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       15 * time.Second,
 		TestDuration:  10 * time.Second,
 		RSEThreshold:   0.03,
 		MinSamples:    5,
@@ -157,7 +154,6 @@ func TestEngineStatsCalculation(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
 		RSEThreshold:   0.03,
 		MinSamples:    3,
@@ -192,7 +188,6 @@ func TestEngineCleanupOnContext(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second, // Short duration to test cleanup
 		RSEThreshold:   0.03,
 		MinSamples:    3,
@@ -222,7 +217,6 @@ func TestEngineGetCurrentStats(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
 		RSEThreshold:   0.03,
 		MinSamples:    3,
@@ -258,7 +252,6 @@ func TestEngineGetBytesUploaded(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
 		RSEThreshold:   0.03,
 		MinSamples:    3,
@@ -317,7 +310,6 @@ func TestEngineResultFields(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second,
 		RSEThreshold:   0.03,
 		MinSamples:    3,
@@ -349,7 +341,6 @@ func BenchmarkEngineUpload(b *testing.B) {
 		engine := NewEngine(Config{
 			URL:           url,
 			Threads:       4,
-			Timeout:       30 * time.Second,
 			TestDuration:  2 * time.Second,
 			RSEThreshold:   0.03,
 			MinSamples:    3,
@@ -368,7 +359,6 @@ func TestEngineConcurrentAccess(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
 		RSEThreshold:   0.03,
 		MinSamples:    3,
@@ -424,7 +414,6 @@ func TestEngineStoppedOnConvergence(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       30 * time.Second,
 		TestDuration:  20 * time.Second,
 		RSEThreshold:   0.5, // High threshold to encourage convergence
 		MinSamples:    3,
