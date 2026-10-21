@@ -36,12 +36,10 @@ var uploadCmd = &cobra.Command{
 		if testDuration == 0 {
 			testDuration = 60 * time.Second
 		}
-		timeout := testDuration
 
 		engine := cmdint.UploadEngine(cmdint.UploadParams{
 			URL:          server,
 			Threads:      uploadFlags.Threads,
-			Timeout:      timeout,
 			TestDuration: testDuration,
 		})
 		renderer := cmdint.NewRenderer(globalFlags)

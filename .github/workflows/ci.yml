@@ -33,6 +33,8 @@ jobs:
         run: go vet ./...
 
       - name: Test
+        # PowerShell splits -coverprofile=coverage.out at the dot; bash passes it intact on every OS.
+        shell: bash
         run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Coverage summary
@@ -51,7 +53,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.64.8
           args: --timeout=5m
 
   build:

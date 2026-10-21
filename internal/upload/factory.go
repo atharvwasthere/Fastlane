@@ -2,6 +2,7 @@ package upload
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/atharvwasthere/Fastlane/internal/bench"
@@ -37,6 +38,9 @@ func (e *benchEngine) Run(ctx context.Context) (bench.Result, error) {
 	out := packResult(e.cfg, started, res)
 	if ctx.Err() != nil {
 		return out, ctx.Err()
+	}
+	if err == nil && res != nil && res.BytesUploaded == 0 {
+		err = fmt.Errorf("upload: no upload request completed (%d errors)", res.Errors)
 	}
 	return out, err
 }

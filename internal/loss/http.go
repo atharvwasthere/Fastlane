@@ -24,6 +24,7 @@ type HTTPEngine struct {
 	received int64
 	errCount int64
 	rtts     []float64 // ms
+	minRTT   float64   // ms, fastest successful probe so far
 	notes    []string
 }
 
@@ -38,18 +39,16 @@ func NewHTTPEngine(cfg Config) *HTTPEngine {
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 30 * time.Second
 	}
+	// Only the per-probe context times a probe out: extra client/transport timers
+	// raced it and surfaced as non-loss errors instead of loss.
 	transport := &http.Transport{
-		DisableKeepAlives:     true, // each probe is its own round trip
-		MaxIdleConnsPerHost:   1,
-		ResponseHeaderTimeout: 2 * time.Second,
+		DisableKeepAlives:   true, // each probe is its own round trip
+		MaxIdleConnsPerHost: 1,
 	}
 	return &HTTPEngine{
-		cfg: cfg,
-		client: &http.Client{
-			Transport: transport,
-			Timeout:   2 * time.Second,
-		},
-		rtts: make([]float64, 0, cfg.Count),
+		cfg:    cfg,
+		client: &http.Client{Transport: transport},
+		rtts:   make([]float64, 0, cfg.Count),
 	}
 }
 
@@ -80,7 +79,7 @@ done:
 
 func (e *HTTPEngine) probe(ctx context.Context, url string) {
 	atomic.AddInt64(&e.sent, 1)
-	reqCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	reqCtx, cancel := context.WithTimeout(ctx, e.probeTimeout())
 	defer cancel()
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodHead, url, nil)
 	if err != nil {
@@ -90,20 +89,38 @@ func (e *HTTPEngine) probe(ctx context.Context, url string) {
 	t0 := time.Now()
 	resp, err := e.client.Do(req)
 	if err != nil {
-		// DeadlineExceeded counts as loss (timeout); other errors are
-		// classified — DNS/connection-refused isn't loss, surface in errors.
-		if errors.Is(err, context.DeadlineExceeded) {
-			return // sent counted, received not — counts toward loss
+		switch {
+		case ctx.Err() != nil:
+			atomic.AddInt64(&e.sent, -1) // the run ended mid-probe: neither sent nor lost
+		case errors.Is(err, context.DeadlineExceeded):
+			// sent counted, received not: counts toward loss
+		default:
+			// DNS/connection-refused isn't loss; surface it in errors.
+			atomic.AddInt64(&e.errCount, 1)
 		}
-		atomic.AddInt64(&e.errCount, 1)
 		return
 	}
 	resp.Body.Close()
-	rtt := float64(time.Since(t0).Milliseconds())
+	rtt := float64(time.Since(t0)) / float64(time.Millisecond)
 	e.mu.Lock()
 	e.received++
 	e.rtts = append(e.rtts, rtt)
+	if e.minRTT == 0 || rtt < e.minRTT {
+		e.minRTT = rtt
+	}
 	e.mu.Unlock()
+}
+
+// probeTimeout declares a probe lost after 4x the fastest RTT seen, at least
+// 2s, so a 600ms satellite link isn't read as loss. Before any reply: 5s.
+func (e *HTTPEngine) probeTimeout() time.Duration {
+	e.mu.RLock()
+	best := e.minRTT
+	e.mu.RUnlock()
+	if best == 0 {
+		return 5 * time.Second
+	}
+	return max(2*time.Second, time.Duration(4*best*float64(time.Millisecond)))
 }
 
 // GetCurrentStats mirrors UDPEngine for parity with future live renderers.
@@ -142,7 +159,8 @@ func (e *HTTPEngine) buildResult(duration time.Duration) *Result {
 
 	min, avg, max, jitter := rttStats(e.rtts)
 
-	notes := append([]string(nil), e.notes...)
+	// TCP retransmits hide real packet loss, so name what is actually counted.
+	notes := append([]string{"loss = HTTP probes over 4x best RTT (min 2s)"}, e.notes...)
 	if errCount > 0 {
 		notes = append(notes, "non-loss errors: connection failures excluded from loss%")
 	}

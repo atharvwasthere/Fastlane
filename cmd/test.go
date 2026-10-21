@@ -51,7 +51,7 @@ Exit codes (with --ci):
 			}
 		}
 
-		dlURL := fmt.Sprintf("https://%s/__down?bytes=104857600", host)
+		dlURL := fmt.Sprintf("https://%s%s", host, cmdint.DownloadPath)
 		upURL := fmt.Sprintf("https://%s/__up", host)
 
 		testDuration := time.Duration(globalFlags.Timeout) * time.Second
@@ -99,6 +99,12 @@ func ciExit(r bench.Result) int {
 		MaxLatencyMS:    testFlags.MaxLatencyMS,
 		MaxJitterMS:     testFlags.MaxJitterMS,
 		MaxLossPercent:  testFlags.MaxLossPercent,
+	}
+	if missing := t.Missing(r); len(missing) > 0 {
+		for _, m := range missing {
+			fmt.Fprintf(os.Stderr, "threshold not checked: %s was not measured\n", m)
+		}
+		return exitTestUnableToRun
 	}
 	viol := t.Check(r)
 	if len(viol) == 0 {

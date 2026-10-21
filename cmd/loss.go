@@ -25,7 +25,7 @@ var lossCmd = &cobra.Command{
 
 Modes:
   http   HEAD requests over HTTP/HTTPS. Cross-platform, public-internet safe. Default.
-  udp    UDP packets to a controlled echo server (port 9 by default). LAN-only —
+  udp    UDP packets to a controlled echo server (port 7 by default). LAN-only —
          port 7/9 is firewalled on every realistic public host.`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -59,7 +59,6 @@ Modes:
 		engine := cmdint.LossEngine(cmdint.LossParams{
 			Mode:         lossMode,
 			Host:         host,
-			Port:         9, // ignored for http
 			Count:        lossFlags.Count,
 			PacketSize:   32,
 			Rate:         lossFlags.Rate,

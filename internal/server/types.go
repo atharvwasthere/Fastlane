@@ -17,12 +17,9 @@ type Server struct {
 
 // ServerWithMetrics extends Server with computed metrics
 type ServerWithMetrics struct {
-	Server              *Server
-	LatencyMS           float64
-	DistanceKM          float64
-	ThroughputMbps      float64
-	Score               float64
-	Available           bool
+	Server    *Server
+	LatencyMS float64
+	Available bool
 }
 
 // ServerList represents a collection of servers
@@ -31,15 +28,6 @@ type ServerList struct {
 	Updated string   `json:"updated"`
 	Source  string   `json:"source"`
 	Servers []Server `json:"servers"`
-}
-
-// SelectionCriteria holds filtering options
-type SelectionCriteria struct {
-	ServerID string
-	City     string
-	Coords   string // "latitude,longitude"
-	Keyword  string
-	MaxCount int
 }
 
 // UserLocation represents user geographic info

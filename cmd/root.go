@@ -56,7 +56,7 @@ Measure latency, download/upload speeds, and packet loss with JSON or text outpu
 		printer := ui.NewPrinter(globalFlags.Verbose)
 		printer.PrintLogo()
 		printer.PrintTaglineBox()
-		cmd.Help()
+		_ = cmd.Help()
 	},
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/atharvwasthere/Fastlane/internal/report"
 	"github.com/atharvwasthere/Fastlane/internal/server"
 	"github.com/atharvwasthere/Fastlane/pkg/render"
+	"golang.org/x/term"
 )
 
 // reportStore is overridable in tests; production code uses a FileStore rooted
@@ -80,7 +81,7 @@ func awaitColo(ch <-chan string) string {
 	}
 }
 
-// RunBench is the canonical run loop. For static renderers (json, prom) it
+// RunBench is the canonical run loop. For static renderers (json) it
 // runs the engine to completion and routes the Result to the renderer. For
 // the card renderer with a bench.LiveEngine, it spawns a bubbletea program
 // that pumps Snapshot() at a fixed cadence — replacing the raw-ANSI cursor
@@ -90,7 +91,8 @@ func RunBench(ctx context.Context, title, serverURL string, engine bench.Engine,
 	log.Debug("runbench start", "kind", title, "server", serverURL, "save", save)
 
 	live, hasLive := engine.(bench.LiveEngine)
-	if hasLive && render.IsCard(r) {
+	// bubbletea needs a terminal; piped or CI output gets the static card instead.
+	if hasLive && render.IsCard(r) && term.IsTerminal(int(os.Stdout.Fd())) {
 		log.Debug("runbench live mode", "kind", title)
 		return runLive(ctx, title, serverURL, live, r, save)
 	}
@@ -143,10 +145,13 @@ func runLive(ctx context.Context, title, serverURL string, engine bench.LiveEngi
 	// Title is the canonical kind string ("download"/"upload"/"ping"/"loss").
 	prog := render.NewLiveProgram(w, title, serverURL, bench.Kind(title), opts, cancel)
 
-	// Engine goroutine — sends terminal Result/Err into the program.
+	// Engine goroutine — sends terminal Result/Err into the program. engineErr
+	// carries the failure out so the command exits non-zero, as RunBench does.
+	engineErr := make(chan error, 1)
 	go func() {
 		res, err := engine.Run(runCtx)
 		if err != nil && runCtx.Err() == nil {
+			engineErr <- err
 			prog.Send(render.ErrMsg{Err: err})
 			return
 		}
@@ -185,5 +190,10 @@ func runLive(ctx context.Context, title, serverURL string, engine bench.LiveEngi
 	}
 	cancel()
 	<-pumpDone
-	return nil
+	select {
+	case err := <-engineErr:
+		return err
+	default:
+		return nil
+	}
 }

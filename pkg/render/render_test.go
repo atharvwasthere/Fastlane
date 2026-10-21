@@ -161,22 +161,6 @@ func TestCardJSONParity(t *testing.T) {
 	}
 }
 
-func TestPromExposition(t *testing.T) {
-	var buf bytes.Buffer
-	New(FormatProm, &buf, Options{}).Final(sampleResult(bench.KindDownload))
-	out := buf.String()
-	for _, want := range []string{
-		"# HELP fastlane_download_final_mbps",
-		"# TYPE fastlane_download_final_mbps gauge",
-		`fastlane_download_final_mbps{server="https://speed.cloudflare.com/__down"} 243.5`,
-		`fastlane_download_converged{server="https://speed.cloudflare.com/__down"} 1`,
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("prom output missing %q\n--- got ---\n%s", want, out)
-		}
-	}
-}
-
 // helpers
 
 func assertGolden(t *testing.T, name string, got []byte) {

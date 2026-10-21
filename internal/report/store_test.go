@@ -2,8 +2,6 @@ package report
 
 import (
 	"context"
-	"errors"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -135,27 +133,6 @@ func TestFileStore_List_SortedNewestFirst(t *testing.T) {
 	}
 }
 
-func TestFileStore_Delete(t *testing.T) {
-	s := NewFileStore(t.TempDir())
-	ctx := context.Background()
-	id, err := s.Save(ctx, sample(bench.KindLoss, "h", time.Now().UTC()))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := s.Delete(ctx, id); err != nil {
-		t.Fatalf("delete: %v", err)
-	}
-	if _, err := s.Load(ctx, id); err == nil {
-		t.Error("expected load after delete to fail")
-	} else if !errors.Is(err, os.ErrNotExist) {
-		// Wrapped, that's fine — just sanity check.
-	}
-	list, _ := s.List(ctx, Filter{})
-	if len(list) != 0 {
-		t.Errorf("expected empty list, got %d", len(list))
-	}
-}
-
 func TestFileStore_List_EmptyDir(t *testing.T) {
 	s := NewFileStore(t.TempDir())
 	got, err := s.List(context.Background(), Filter{})
@@ -180,11 +157,11 @@ func TestFileStore_List_MissingDir(t *testing.T) {
 
 func TestShortHost(t *testing.T) {
 	cases := map[string]string{
-		"https://speed.cloudflare.com/__down":         "speed.cloudflare.com",
-		"https://speed.cloudflare.com:443/__down":     "speed.cloudflare.com",
-		"google.com":                                  "google.com",
-		"":                                            "",
-		"127.0.0.1:9":                                 "127.0.0.1",
+		"https://speed.cloudflare.com/__down":     "speed.cloudflare.com",
+		"https://speed.cloudflare.com:443/__down": "speed.cloudflare.com",
+		"google.com":  "google.com",
+		"":            "",
+		"127.0.0.1:9": "127.0.0.1",
 	}
 	for in, want := range cases {
 		if got := shortHost(in); got != want {

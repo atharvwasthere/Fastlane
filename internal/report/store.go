@@ -5,7 +5,7 @@
 // saved report and a fresh --json invocation are byte-equivalent (modulo
 // non-zero metric ordering).
 //
-// The Store interface is small on purpose — Save/Load/List/Delete. A SQLite
+// The Store interface is small on purpose — Save/Load/List. A SQLite
 // backend can slot in later without touching cmd/.
 package report
 
@@ -30,7 +30,6 @@ type Store interface {
 	Save(ctx context.Context, r bench.Result) (id string, err error)
 	Load(ctx context.Context, id string) (bench.Result, error)
 	List(ctx context.Context, filter Filter) ([]Meta, error)
-	Delete(ctx context.Context, id string) error
 }
 
 // Filter narrows a List call.
@@ -198,18 +197,6 @@ func (s *FileStore) List(ctx context.Context, filter Filter) ([]Meta, error) {
 		out = out[:filter.Limit]
 	}
 	return out, nil
-}
-
-// Delete removes id's file from disk. Missing files report ErrNotExist.
-func (s *FileStore) Delete(ctx context.Context, id string) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	path := filepath.Join(s.root, id+".json")
-	if err := os.Remove(path); err != nil {
-		return fmt.Errorf("report: delete %s: %w", path, err)
-	}
-	return nil
 }
 
 // readHeader extracts the minimal Meta from a report file without loading the

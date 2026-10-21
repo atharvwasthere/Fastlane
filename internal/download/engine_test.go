@@ -23,11 +23,11 @@ func startMockServer(size int64) (string, func()) {
 		// Send fixed amount of data
 		data := make([]byte, 1024)
 		for i := int64(0); i < size; i += 1024 {
-			w.Write(data)
+			_, _ = w.Write(data)
 		}
 	})
 
-	go http.Serve(listener, mux)
+	go func() { _ = http.Serve(listener, mux) }()
 
 	return "http://" + addr + "/data", func() { listener.Close() }
 }
@@ -47,9 +47,8 @@ func TestEngineBasicDownload(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -81,37 +80,39 @@ func TestEngineMultiThreading(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/concurrent", func(w http.ResponseWriter, r *http.Request) {
 		current := atomic.AddInt32(&activeConnections, 1)
-		if current > peakConnections {
-			atomic.StoreInt32(&peakConnections, current)
+		for {
+			peak := atomic.LoadInt32(&peakConnections)
+			if current <= peak || atomic.CompareAndSwapInt32(&peakConnections, peak, current) {
+				break
+			}
 		}
 		defer atomic.AddInt32(&activeConnections, -1)
 
 		// Send 100KB
 		for i := 0; i < 100; i++ {
-			w.Write(make([]byte, 1024))
+			_, _ = w.Write(make([]byte, 1024))
 		}
 	})
 
 	listener, _ := net.Listen("tcp", "127.0.0.1:0")
 	defer listener.Close()
 
-	go http.Serve(listener, mux)
+	go func() { _ = http.Serve(listener, mux) }()
 	url := "http://" + listener.Addr().String() + "/concurrent"
 
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       4,
-		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    2,
 		UpdateInterval: 100 * time.Millisecond,
 	})
 
 	_, _ = engine.Run(context.Background())
 
-	if peakConnections < 2 {
-		t.Logf("Expected at least 2 concurrent connections, got %d", peakConnections)
+	if peak := atomic.LoadInt32(&peakConnections); peak < 2 {
+		t.Logf("Expected at least 2 concurrent connections, got %d", peak)
 	}
 }
 
@@ -123,9 +124,8 @@ func TestEngineConvergenceDetection(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       15 * time.Second,
 		TestDuration:  10 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    5,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -153,9 +153,8 @@ func TestEngineStatsCalculation(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -188,9 +187,8 @@ func TestEngineCleanupOnContext(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second, // Short duration to test cleanup
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -198,7 +196,7 @@ func TestEngineCleanupOnContext(t *testing.T) {
 	// Run should complete without hanging
 	done := make(chan bool)
 	go func() {
-		engine.Run(context.Background())
+		_, _ = engine.Run(context.Background())
 		done <- true
 	}()
 
@@ -218,9 +216,8 @@ func TestEngineGetCurrentStats(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -243,7 +240,7 @@ func TestEngineGetCurrentStats(t *testing.T) {
 	}
 
 	// Wait for completion
-	_ = <-done
+	<-done
 }
 
 // TestEngineGetBytesDownloaded tests byte counting
@@ -254,9 +251,8 @@ func TestEngineGetBytesDownloaded(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -296,12 +292,12 @@ func TestEngineDefaults(t *testing.T) {
 		t.Errorf("Expected default threads 4, got %d", engine.config.Threads)
 	}
 
-	if engine.config.CVThreshold != 0.03 {
-		t.Errorf("Expected default CVThreshold 0.03, got %f", engine.config.CVThreshold)
+	if engine.config.RSEThreshold != 0.03 {
+		t.Errorf("Expected default RSEThreshold 0.03, got %f", engine.config.RSEThreshold)
 	}
 
-	if engine.config.MinSamples != 5 {
-		t.Errorf("Expected default MinSamples 5, got %d", engine.config.MinSamples)
+	if engine.config.MinSamples != 20 {
+		t.Errorf("Expected default MinSamples 20, got %d", engine.config.MinSamples)
 	}
 }
 
@@ -313,9 +309,8 @@ func TestEngineResultFields(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -345,14 +340,13 @@ func BenchmarkEngineDownload(b *testing.B) {
 		engine := NewEngine(Config{
 			URL:           url,
 			Threads:       4,
-			Timeout:       30 * time.Second,
 			TestDuration:  2 * time.Second,
-			CVThreshold:   0.03,
+			RSEThreshold:   0.03,
 			MinSamples:    3,
 			UpdateInterval: 100 * time.Millisecond,
 		})
 
-		engine.Run(context.Background())
+		_, _ = engine.Run(context.Background())
 	}
 }
 
@@ -364,9 +358,8 @@ func TestEngineConcurrentAccess(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -420,9 +413,8 @@ func TestEngineStoppedOnConvergence(t *testing.T) {
 	engine := NewEngine(Config{
 		URL:           url,
 		Threads:       2,
-		Timeout:       30 * time.Second,
 		TestDuration:  20 * time.Second,
-		CVThreshold:   0.5, // High threshold to encourage convergence
+		RSEThreshold:   0.5, // High threshold to encourage convergence
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -436,5 +428,38 @@ func TestEngineStoppedOnConvergence(t *testing.T) {
 		if duration > 15*time.Second {
 			t.Logf("Note: Convergence detected but took %v (might vary based on network)", duration)
 		}
+	}
+}
+
+// TestBenchEngineNoDataIsError checks an unreachable server surfaces an error, not a 0 Mbps result.
+func TestBenchEngineNoDataIsError(t *testing.T) {
+	listener, _ := net.Listen("tcp", "127.0.0.1:0")
+	addr := listener.Addr().String()
+	listener.Close() // nothing listens here now, so every dial is refused
+
+	eng := NewBenchEngine(Config{URL: "http://" + addr + "/data", Threads: 2, TestDuration: 300 * time.Millisecond})
+	if _, err := eng.Run(context.Background()); err == nil {
+		t.Fatal("expected an error when no bytes were transferred")
+	}
+}
+
+// TestEngineErrorStatusNotCounted checks a 403 body is an error, not a throughput sample.
+func TestEngineErrorStatusNotCounted(t *testing.T) {
+	listener, _ := net.Listen("tcp", "127.0.0.1:0")
+	mux := http.NewServeMux()
+	mux.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte("0"))
+	})
+	go func() { _ = http.Serve(listener, mux) }()
+	defer listener.Close()
+
+	engine := NewEngine(Config{URL: "http://" + listener.Addr().String() + "/data", Threads: 2, TestDuration: 300 * time.Millisecond})
+	result, _ := engine.Run(context.Background())
+	if result.BytesDownloaded != 0 || result.FinalMbps != 0 {
+		t.Fatalf("403 counted as data: bytes=%d mbps=%.3f", result.BytesDownloaded, result.FinalMbps)
+	}
+	if result.Errors == 0 {
+		t.Fatal("expected 403 responses to be counted as errors")
 	}
 }

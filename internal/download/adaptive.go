@@ -10,26 +10,26 @@ import (
 )
 
 // AdaptiveConfig steers the hill-climb sweep that picks an optimal thread count.
-// The sweep runs short download passes at increasing concurrency until the
-// marginal throughput gain falls below MarginalGainThreshold, then re-runs the
-// best concurrency for FinalRunDuration to produce the reported Result.
+// The sweep doubles concurrency from StartThreads, keeps the best count seen,
+// and stops after Patience probes in a row fail to beat it by
+// MarginalGainThreshold; then it re-runs the best count for FinalRunDuration.
 type AdaptiveConfig struct {
 	Base                  Config        // Base download config; Threads is overridden per sweep step.
-	StartThreads          int           // Sweep start (default 2)
-	StepThreads           int           // Increment per step (default 2)
+	StartThreads          int           // Sweep start (default 1)
 	MaxThreads            int           // Hard cap (default 16)
+	Patience              int           // Non-improving probes in a row before stopping (default 2)
 	ProbeDuration         time.Duration // Duration of each sweep probe (default 2s)
 	FinalRunDuration      time.Duration // Final run at best threads (default 6s)
-	MarginalGainThreshold float64       // Stop when (new-prev)/prev < this (default 0.05 = 5%)
+	MarginalGainThreshold float64       // A probe improves only if (new-best)/best >= this (default 0.05 = 5%)
 }
 
 // DefaultAdaptive returns sensible defaults built on top of the supplied base.
 func DefaultAdaptive(base Config) AdaptiveConfig {
 	return AdaptiveConfig{
 		Base:                  base,
-		StartThreads:          2,
-		StepThreads:           2,
+		StartThreads:          1,
 		MaxThreads:            16,
+		Patience:              2,
 		ProbeDuration:         2 * time.Second,
 		FinalRunDuration:      6 * time.Second,
 		MarginalGainThreshold: 0.05,
@@ -49,13 +49,13 @@ type adaptiveEngine struct{ cfg AdaptiveConfig }
 
 func withDefaults(c AdaptiveConfig) AdaptiveConfig {
 	if c.StartThreads <= 0 {
-		c.StartThreads = 2
-	}
-	if c.StepThreads <= 0 {
-		c.StepThreads = 2
+		c.StartThreads = 1
 	}
 	if c.MaxThreads <= 0 {
 		c.MaxThreads = 16
+	}
+	if c.Patience <= 0 {
+		c.Patience = 2
 	}
 	if c.ProbeDuration <= 0 {
 		c.ProbeDuration = 2 * time.Second
@@ -74,35 +74,14 @@ func withDefaults(c AdaptiveConfig) AdaptiveConfig {
 // result was collected (possibly empty).
 func (a *adaptiveEngine) Run(ctx context.Context) (bench.Result, error) {
 	log := logging.FromContext(ctx)
-	best := a.cfg.StartThreads
-	var prevMbps float64
-	sweepEnd := a.cfg.StartThreads
-
-	for threads := a.cfg.StartThreads; threads <= a.cfg.MaxThreads; threads += a.cfg.StepThreads {
-		if ctx.Err() != nil {
-			break
+	best, sweepEnd := climb(a.cfg, func(threads int) (float64, error) {
+		if err := ctx.Err(); err != nil {
+			return 0, err
 		}
 		mbps, err := a.probe(ctx, threads, a.cfg.ProbeDuration)
-		if err != nil {
-			log.Debug("adaptive: probe failed", "threads", threads, "err", err)
-			break
-		}
-		log.Debug("adaptive: probe", "threads", threads, "mbps", mbps)
-		sweepEnd = threads
-
-		if prevMbps == 0 {
-			prevMbps = mbps
-			best = threads
-			continue
-		}
-		gain := (mbps - prevMbps) / prevMbps
-		if gain < a.cfg.MarginalGainThreshold {
-			// Marginal gain too small — previous step was optimal.
-			break
-		}
-		prevMbps = mbps
-		best = threads
-	}
+		log.Debug("adaptive: probe", "threads", threads, "mbps", mbps, "err", err)
+		return mbps, err
+	})
 
 	log.Info("adaptive: chose threads",
 		"best", best, "sweep_start", a.cfg.StartThreads, "sweep_end", sweepEnd)
@@ -111,9 +90,6 @@ func (a *adaptiveEngine) Run(ctx context.Context) (bench.Result, error) {
 	finalCfg := a.cfg.Base
 	finalCfg.Threads = best
 	finalCfg.TestDuration = a.cfg.FinalRunDuration
-	if finalCfg.Timeout < a.cfg.FinalRunDuration {
-		finalCfg.Timeout = a.cfg.FinalRunDuration + 2*time.Second
-	}
 
 	started := time.Now()
 	res, err := NewEngine(finalCfg).Run(ctx)
@@ -123,7 +99,34 @@ func (a *adaptiveEngine) Run(ctx context.Context) (bench.Result, error) {
 	if ctx.Err() != nil {
 		return out, ctx.Err()
 	}
+	if err == nil {
+		err = errNoData(res)
+	}
 	return out, err
+}
+
+// climb doubles the thread count, tracking the best rate seen. One noisy
+// probe can't end the sweep: it stops after Patience non-improving probes in
+// a row, or on a probe error. Returns the best count and the last one probed.
+func climb(c AdaptiveConfig, measure func(threads int) (float64, error)) (best, last int) {
+	best, last = c.StartThreads, c.StartThreads
+	var bestMbps float64
+	misses := 0
+	for threads := c.StartThreads; threads <= c.MaxThreads; threads *= 2 {
+		mbps, err := measure(threads)
+		if err != nil {
+			break
+		}
+		last = threads
+		if bestMbps == 0 || (mbps-bestMbps)/bestMbps >= c.MarginalGainThreshold {
+			best, bestMbps, misses = threads, mbps, 0
+			continue
+		}
+		if misses++; misses >= c.Patience {
+			break
+		}
+	}
+	return best, last
 }
 
 // probe runs a short download burst at the given thread count and returns its
@@ -133,9 +136,6 @@ func (a *adaptiveEngine) probe(ctx context.Context, threads int, dur time.Durati
 	cfg := a.cfg.Base
 	cfg.Threads = threads
 	cfg.TestDuration = dur
-	if cfg.Timeout < dur {
-		cfg.Timeout = dur + 2*time.Second
-	}
 	res, err := NewEngine(cfg).Run(ctx)
 	if err != nil {
 		return 0, err

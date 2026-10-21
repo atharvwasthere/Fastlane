@@ -212,7 +212,7 @@ func buildSubtitle(r bench.Result) string {
 func subtitleFor(r bench.Result) string {
 	switch r.Kind {
 	case bench.KindPing:
-		return fmt.Sprintf("%.0f ms average · jitter %.1f ms · %d samples",
+		return fmt.Sprintf("%.0f ms median · jitter %.1f ms · %d samples",
 			r.Metrics["latency_ms"], r.Metrics["jitter_ms"], r.Counters["samples"])
 	case bench.KindDownload, bench.KindUpload:
 		state := "converged"
@@ -300,7 +300,7 @@ func metricCells(r bench.Result) []cell {
 	switch r.Kind {
 	case bench.KindPing:
 		return []cell{
-			{fmt.Sprintf("%.0fms", r.Metrics["latency_ms"]), "AVG LATENCY"},
+			{fmt.Sprintf("%.0fms", r.Metrics["latency_ms"]), "MEDIAN LATENCY"},
 			{fmt.Sprintf("%.0fms", r.Metrics["max_ms"]), "WORST CASE"},
 			{fmt.Sprintf("%.0fms", r.Metrics["jitter_ms"]), "JITTER"},
 		}

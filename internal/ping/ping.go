@@ -1,138 +1,182 @@
 package ping
 
 import (
+	"context"
 	"crypto/tls"
+	"fmt"
 	"math"
-	"net"
 	"net/http"
+	"net/http/httptrace"
+	"net/url"
+	"slices"
 	"strings"
+	"sync"
 	"time"
 )
 
-// LatencyResult holds latency measurements for each layer
+// LatencyResult holds latency measurements for each layer. Latency is
+// right-skewed (a hard floor, a long queueing tail), so layers report the
+// median and jitter is the mean change between consecutive probes; mean and
+// standard deviation would both be dragged by the tail.
 type LatencyResult struct {
-	DNSLatencyMS   float64
-	TCPLatencyMS   float64
-	TLSLatencyMS   float64
-	HTTPLatencyMS  float64
-	TotalLatencyMS float64
-	JitterMS       float64
-	MinMS          float64
-	MaxMS          float64
-	MeanMS         float64
-	Samples        []float64
-	Errors         int64 // DNS/TCP/TLS/HTTP attempt failures across all layers
+	DNSLatencyMS  float64
+	TCPLatencyMS  float64
+	TLSLatencyMS  float64
+	HTTPLatencyMS float64 // time to first byte: request written → first response byte
+	MedianMS      float64 // headline latency: median TCP connect
+	JitterMS      float64 // mean |difference| between consecutive TCP connects
+	MinMS         float64 // path floor
+	MaxMS         float64
+	Samples       []float64 // TCP connect times in probe order
+	Errors        int64     // probes that failed at any layer
 }
 
-// MeasureLayered measures latency at each protocol layer
-func MeasureLayered(host string, iterations int, timeout time.Duration) (*LatencyResult, error) {
+// MeasureLayered sends iterations requests, each on a fresh connection, and
+// times DNS, TCP connect, TLS handshake and TTFB of the same request with
+// httptrace, so no layer's number includes another's.
+func MeasureLayered(ctx context.Context, host string, iterations int, timeout time.Duration) (*LatencyResult, error) {
 	if iterations < 1 {
 		iterations = 5
 	}
-
-	result := &LatencyResult{
-		Samples: make([]float64, 0),
+	target, err := targetURL(host)
+	if err != nil {
+		return nil, err
 	}
 
-	// Normalize host (remove protocol prefix if present)
-	host = strings.TrimPrefix(host, "https://")
-	host = strings.TrimPrefix(host, "http://")
-	host = strings.Split(host, "/")[0] // Remove path
+	transport := &http.Transport{DisableKeepAlives: true} // a reused connection would skip DNS/TCP/TLS
+	defer transport.CloseIdleConnections()
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   timeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse // time the first response, not a redirect chain
+		},
+	}
 
-	// 1. Measure DNS latency
-	dnsSamples := make([]float64, 0)
+	result := &LatencyResult{}
+	var dnsS, tlsS, ttfbS []float64
 	for i := 0; i < iterations; i++ {
-		start := time.Now()
-		_, err := net.LookupIP(host)
-		if err == nil {
-			dnsSamples = append(dnsSamples, float64(time.Since(start).Milliseconds()))
-		} else {
+		if err := ctx.Err(); err != nil {
+			return result, err
+		}
+		p, err := probe(ctx, client, target)
+		if err != nil {
 			result.Errors++
 		}
-	}
-	if len(dnsSamples) > 0 {
-		result.DNSLatencyMS = average(dnsSamples)
-	}
-
-	// 2. Measure TCP latency
-	tcpSamples := make([]float64, 0)
-	for i := 0; i < iterations; i++ {
-		start := time.Now()
-		conn, err := net.DialTimeout("tcp", host+":80", timeout)
-		if err == nil {
-			tcpSamples = append(tcpSamples, float64(time.Since(start).Milliseconds()))
-			conn.Close()
-		} else {
-			result.Errors++
+		// Keep layers that completed even if a later one failed (e.g. TCP ok, TLS cert bad).
+		if p.dnsOK {
+			dnsS = append(dnsS, p.dns)
+		}
+		if p.tcpOK {
+			result.Samples = append(result.Samples, p.tcp)
+		}
+		if p.tlsOK {
+			tlsS = append(tlsS, p.tls)
+		}
+		if p.ttfbOK {
+			ttfbS = append(ttfbS, p.ttfb)
 		}
 	}
-	if len(tcpSamples) > 0 {
-		result.TCPLatencyMS = average(tcpSamples)
-	}
 
-	// 3. Measure TLS latency
-	tlsSamples := make([]float64, 0)
-	for i := 0; i < iterations; i++ {
-		start := time.Now()
-		conn, err := tls.DialWithDialer(
-			&net.Dialer{Timeout: timeout},
-			"tcp",
-			host+":443",
-			&tls.Config{InsecureSkipVerify: true},
-		)
-		if err == nil {
-			tlsSamples = append(tlsSamples, float64(time.Since(start).Milliseconds()))
-			conn.Close()
-		} else {
-			result.Errors++
-		}
+	if len(result.Samples) == 0 {
+		return result, fmt.Errorf("ping %s: no successful probes (%d errors)", host, result.Errors)
 	}
-	if len(tlsSamples) > 0 {
-		result.TLSLatencyMS = average(tlsSamples)
-	}
-
-	// 4. Measure HTTP latency (fallback)
-	httpSamples := make([]float64, 0)
-	client := &http.Client{Timeout: timeout}
-	for i := 0; i < iterations; i++ {
-		start := time.Now()
-		resp, err := client.Get("http://" + host)
-		if err == nil {
-			httpSamples = append(httpSamples, float64(time.Since(start).Milliseconds()))
-			resp.Body.Close()
-		} else {
-			result.Errors++
-		}
-	}
-	if len(httpSamples) > 0 {
-		result.HTTPLatencyMS = average(httpSamples)
-	}
-
-	// Collect all samples for overall statistics
-	result.Samples = append(result.Samples, dnsSamples...)
-	result.Samples = append(result.Samples, tcpSamples...)
-
-	if len(result.Samples) > 0 {
-		result.MeanMS = average(result.Samples)
-		result.MinMS = minimum(result.Samples)
-		result.MaxMS = maximum(result.Samples)
-		result.JitterMS = stddev(result.Samples)
-		result.TotalLatencyMS = result.MeanMS
-	}
+	result.DNSLatencyMS = median(dnsS)
+	result.TCPLatencyMS = median(result.Samples)
+	result.TLSLatencyMS = median(tlsS)
+	result.HTTPLatencyMS = median(ttfbS)
+	result.MedianMS = result.TCPLatencyMS
+	result.MinMS = minimum(result.Samples)
+	result.MaxMS = maximum(result.Samples)
+	result.JitterMS = meanAbsDiff(result.Samples)
 
 	return result, nil
 }
 
+type phases struct {
+	dns, tcp, tls, ttfb         float64
+	dnsOK, tcpOK, tlsOK, ttfbOK bool // a coarse clock (Windows) can time a real phase as 0 ms, so 0 can't mean "absent"
+}
+
+// probe runs one request and returns the duration of each phase it reached.
+func probe(ctx context.Context, client *http.Client, target string) (phases, error) {
+	var (
+		mu                        sync.Mutex
+		p                         phases
+		dnsStart, tlsStart, wrote time.Time
+		connStart                 = map[string]time.Time{}
+	)
+	// Callbacks can run on dialer goroutines (Happy Eyeballs races IPv4/IPv6), so guard everything.
+	trace := &httptrace.ClientTrace{
+		DNSStart: func(httptrace.DNSStartInfo) { mu.Lock(); dnsStart = time.Now(); mu.Unlock() },
+		DNSDone:  func(httptrace.DNSDoneInfo) { mu.Lock(); p.dns, p.dnsOK = sinceMS(dnsStart), true; mu.Unlock() },
+		ConnectStart: func(_, addr string) {
+			mu.Lock()
+			connStart[addr] = time.Now()
+			mu.Unlock()
+		},
+		ConnectDone: func(_, addr string, err error) {
+			mu.Lock()
+			if err == nil && !p.tcpOK {
+				p.tcp, p.tcpOK = sinceMS(connStart[addr]), true // per-address start: the winning dial, not the first one tried
+			}
+			mu.Unlock()
+		},
+		TLSHandshakeStart: func() { mu.Lock(); tlsStart = time.Now(); mu.Unlock() },
+		TLSHandshakeDone: func(_ tls.ConnectionState, err error) {
+			mu.Lock()
+			if err == nil {
+				p.tls, p.tlsOK = sinceMS(tlsStart), true
+			}
+			mu.Unlock()
+		},
+		WroteRequest:         func(httptrace.WroteRequestInfo) { mu.Lock(); wrote = time.Now(); mu.Unlock() },
+		GotFirstResponseByte: func() { mu.Lock(); p.ttfb, p.ttfbOK = sinceMS(wrote), true; mu.Unlock() },
+	}
+
+	req, err := http.NewRequestWithContext(httptrace.WithClientTrace(ctx, trace), http.MethodGet, target, nil)
+	if err != nil {
+		return phases{}, err
+	}
+	resp, err := client.Do(req)
+	if err == nil {
+		resp.Body.Close() // only the first byte matters
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	return p, err
+}
+
+// targetURL accepts "host", "host:port" or a URL and returns scheme://host/.
+// Bare hosts default to https, the port every public server answers on.
+func targetURL(host string) (string, error) {
+	if !strings.Contains(host, "://") {
+		host = "https://" + host
+	}
+	u, err := url.Parse(host)
+	if err != nil || u.Host == "" {
+		return "", fmt.Errorf("ping: invalid host %q", host)
+	}
+	return u.Scheme + "://" + u.Host + "/", nil
+}
+
+// sinceMS keeps sub-millisecond precision that Duration.Milliseconds() truncates.
+func sinceMS(start time.Time) float64 {
+	return float64(time.Since(start)) / float64(time.Millisecond)
+}
+
 // helper functions
-func average(vals []float64) float64 {
+func median(vals []float64) float64 {
 	if len(vals) == 0 {
 		return 0
 	}
-	sum := 0.0
-	for _, v := range vals {
-		sum += v
+	sorted := slices.Clone(vals)
+	slices.Sort(sorted)
+	mid := len(sorted) / 2
+	if len(sorted)%2 == 1 {
+		return sorted[mid]
 	}
-	return sum / float64(len(vals))
+	return (sorted[mid-1] + sorted[mid]) / 2
 }
 
 func minimum(vals []float64) float64 {
@@ -161,16 +205,15 @@ func maximum(vals []float64) float64 {
 	return max
 }
 
-func stddev(vals []float64) float64 {
+// meanAbsDiff is the average change between consecutive samples. Unlike a
+// standard deviation it assumes no distribution shape.
+func meanAbsDiff(vals []float64) float64 {
 	if len(vals) < 2 {
 		return 0
 	}
-	mean := average(vals)
-	sumSq := 0.0
-	for _, v := range vals {
-		diff := v - mean
-		sumSq += diff * diff
+	sum := 0.0
+	for i := 1; i < len(vals); i++ {
+		sum += math.Abs(vals[i] - vals[i-1])
 	}
-	variance := sumSq / float64(len(vals)-1)
-	return math.Sqrt(variance)
+	return sum / float64(len(vals)-1)
 }

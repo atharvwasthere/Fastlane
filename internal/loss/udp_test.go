@@ -38,7 +38,7 @@ func startMockUDPServer(t *testing.T, port int, dropRate float64) *net.UDPConn {
 			}
 
 			// Echo back
-			conn.WriteToUDP(buffer[:n], remoteAddr)
+			_, _ = conn.WriteToUDP(buffer[:n], remoteAddr)
 		}
 	}()
 
@@ -162,8 +162,8 @@ func TestEngineDefaults(t *testing.T) {
 
 	engine := NewUDPEngine(config)
 
-	if engine.config.Port != 9 {
-		t.Errorf("Expected default port 9, got %d", engine.config.Port)
+	if engine.config.Port != 7 {
+		t.Errorf("Expected default port 7, got %d", engine.config.Port)
 	}
 
 	if engine.config.Count != 100 {
@@ -324,5 +324,41 @@ func TestEngineCompleteLoss(t *testing.T) {
 
 	if result.PacketsLost != 100 {
 		t.Errorf("Expected 100 lost packets, got %d", result.PacketsLost)
+	}
+}
+
+// TestEngineDuplicateEchoes checks each sequence counts once and extra echoes can't wedge the receiver.
+func TestEngineDuplicateEchoes(t *testing.T) {
+	conn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	go func() {
+		buf := make([]byte, 1500)
+		for {
+			n, from, err := conn.ReadFromUDP(buf)
+			if err != nil {
+				return
+			}
+			for i := 0; i < 3; i++ { // 3x the expected echoes overflowed the old Count-sized channel
+				_, _ = conn.WriteToUDP(buf[:n], from)
+			}
+		}
+	}()
+
+	engine := NewUDPEngine(Config{Host: "127.0.0.1", Port: conn.LocalAddr().(*net.UDPAddr).Port, Count: 10, Rate: 50, Timeout: 5 * time.Second})
+	done := make(chan *Result, 1)
+	go func() {
+		r, _ := engine.Run(context.Background())
+		done <- r
+	}()
+	select {
+	case r := <-done:
+		if r.PacketsReceived != r.PacketsSent || r.LossPercent != 0 {
+			t.Fatalf("duplicates miscounted: sent=%d received=%d loss=%.1f%%", r.PacketsSent, r.PacketsReceived, r.LossPercent)
+		}
+	case <-time.After(4 * time.Second):
+		t.Fatal("Run did not return: receiver blocked")
 	}
 }

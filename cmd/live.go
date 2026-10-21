@@ -46,7 +46,6 @@ var liveCmd = &cobra.Command{
 				return cmdint.DownloadEngine(cmdint.DownloadParams{
 					URL:          dlURL,
 					Threads:      2,
-					Timeout:      stepDur + 2*time.Second,
 					TestDuration: stepDur,
 				})
 			},
@@ -54,7 +53,6 @@ var liveCmd = &cobra.Command{
 				return cmdint.UploadEngine(cmdint.UploadParams{
 					URL:          upURL,
 					Threads:      2,
-					Timeout:      stepDur + 2*time.Second,
 					TestDuration: stepDur,
 				})
 			},

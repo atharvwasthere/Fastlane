@@ -64,6 +64,21 @@ func TestThresholds_EachField(t *testing.T) {
 	}
 }
 
+func TestThresholds_MissingMetric(t *testing.T) {
+	// A failed ping step leaves latency_ms absent; that must not pass a max-gate.
+	r := bench.Result{Metrics: map[string]float64{"download_mbps": 200}}
+	th := Thresholds{MinDownloadMbps: 100, MaxLatencyMS: 50}
+	if v := th.Check(r); len(v) != 0 {
+		t.Fatalf("expected no violations, got %v", v)
+	}
+	if m := th.Missing(r); len(m) != 1 || m[0] != "latency_ms" {
+		t.Fatalf("got missing %v, want [latency_ms]", m)
+	}
+	if m := (Thresholds{}).Missing(r); len(m) != 0 {
+		t.Fatalf("inactive gates must not be reported missing, got %v", m)
+	}
+}
+
 func TestThresholds_ZeroDisables(t *testing.T) {
 	r := bench.Result{Metrics: map[string]float64{"download_mbps": 1, "latency_ms": 5000}}
 	th := Thresholds{} // all zero → no checks active
