@@ -2,6 +2,7 @@ package ping
 
 import (
 	"crypto/tls"
+	"fmt"
 	"math"
 	"net"
 	"net/http"
@@ -112,13 +113,14 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 	result.Samples = append(result.Samples, dnsSamples...)
 	result.Samples = append(result.Samples, tcpSamples...)
 
-	if len(result.Samples) > 0 {
-		result.MeanMS = average(result.Samples)
-		result.MinMS = minimum(result.Samples)
-		result.MaxMS = maximum(result.Samples)
-		result.JitterMS = stddev(result.Samples)
-		result.TotalLatencyMS = result.MeanMS
+	if len(result.Samples) == 0 {
+		return result, fmt.Errorf("ping %s: no successful probes (%d errors)", host, result.Errors)
 	}
+	result.MeanMS = average(result.Samples)
+	result.MinMS = minimum(result.Samples)
+	result.MaxMS = maximum(result.Samples)
+	result.JitterMS = stddev(result.Samples)
+	result.TotalLatencyMS = result.MeanMS
 
 	return result, nil
 }

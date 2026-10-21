@@ -442,3 +442,15 @@ func TestEngineStoppedOnConvergence(t *testing.T) {
 		}
 	}
 }
+
+// TestBenchEngineNoDataIsError checks an unreachable server surfaces an error, not a 0 Mbps result.
+func TestBenchEngineNoDataIsError(t *testing.T) {
+	listener, _ := net.Listen("tcp", "127.0.0.1:0")
+	addr := listener.Addr().String()
+	listener.Close() // nothing listens here now, so every dial is refused
+
+	eng := NewBenchEngine(Config{URL: "http://" + addr + "/data", Threads: 2, TestDuration: 300 * time.Millisecond})
+	if _, err := eng.Run(context.Background()); err == nil {
+		t.Fatal("expected an error when no bytes were transferred")
+	}
+}

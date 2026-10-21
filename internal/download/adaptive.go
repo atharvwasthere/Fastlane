@@ -123,6 +123,9 @@ func (a *adaptiveEngine) Run(ctx context.Context) (bench.Result, error) {
 	if ctx.Err() != nil {
 		return out, ctx.Err()
 	}
+	if err == nil {
+		err = errNoData(res)
+	}
 	return out, err
 }
 

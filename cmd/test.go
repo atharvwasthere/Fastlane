@@ -100,6 +100,12 @@ func ciExit(r bench.Result) int {
 		MaxJitterMS:     testFlags.MaxJitterMS,
 		MaxLossPercent:  testFlags.MaxLossPercent,
 	}
+	if missing := t.Missing(r); len(missing) > 0 {
+		for _, m := range missing {
+			fmt.Fprintf(os.Stderr, "threshold not checked: %s was not measured\n", m)
+		}
+		return exitTestUnableToRun
+	}
 	viol := t.Check(r)
 	if len(viol) == 0 {
 		return exitCIPass

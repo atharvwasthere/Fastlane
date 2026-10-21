@@ -2,6 +2,7 @@ package download
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/atharvwasthere/Fastlane/internal/bench"
@@ -40,7 +41,18 @@ func (e *benchEngine) Run(ctx context.Context) (bench.Result, error) {
 	if ctx.Err() != nil {
 		return out, ctx.Err()
 	}
+	if err == nil {
+		err = errNoData(res)
+	}
 	return out, err
+}
+
+// errNoData keeps a run that moved zero bytes from reporting 0 Mbps as a measurement.
+func errNoData(res *Result) error {
+	if res == nil || res.BytesDownloaded > 0 {
+		return nil
+	}
+	return fmt.Errorf("download: no data transferred (%d errors)", res.Errors)
 }
 
 func packResult(cfg Config, started time.Time, res *Result) bench.Result {
