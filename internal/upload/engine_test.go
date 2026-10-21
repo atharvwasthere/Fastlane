@@ -50,7 +50,7 @@ func TestEngineBasicUpload(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -107,7 +107,7 @@ func TestEngineMultiThreading(t *testing.T) {
 		Threads:       4,
 		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    2,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -129,7 +129,7 @@ func TestEngineConvergenceDetection(t *testing.T) {
 		Threads:       2,
 		Timeout:       15 * time.Second,
 		TestDuration:  10 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    5,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -159,7 +159,7 @@ func TestEngineStatsCalculation(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -194,7 +194,7 @@ func TestEngineCleanupOnContext(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second, // Short duration to test cleanup
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -224,7 +224,7 @@ func TestEngineGetCurrentStats(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -260,7 +260,7 @@ func TestEngineGetBytesUploaded(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -300,12 +300,12 @@ func TestEngineDefaults(t *testing.T) {
 		t.Errorf("Expected default threads 4, got %d", engine.config.Threads)
 	}
 
-	if engine.config.CVThreshold != 0.03 {
-		t.Errorf("Expected default CVThreshold 0.03, got %f", engine.config.CVThreshold)
+	if engine.config.RSEThreshold != 0.03 {
+		t.Errorf("Expected default RSEThreshold 0.03, got %f", engine.config.RSEThreshold)
 	}
 
-	if engine.config.MinSamples != 5 {
-		t.Errorf("Expected default MinSamples 5, got %d", engine.config.MinSamples)
+	if engine.config.MinSamples != 20 {
+		t.Errorf("Expected default MinSamples 20, got %d", engine.config.MinSamples)
 	}
 }
 
@@ -319,7 +319,7 @@ func TestEngineResultFields(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -351,7 +351,7 @@ func BenchmarkEngineUpload(b *testing.B) {
 			Threads:       4,
 			Timeout:       30 * time.Second,
 			TestDuration:  2 * time.Second,
-			CVThreshold:   0.03,
+			RSEThreshold:   0.03,
 			MinSamples:    3,
 			UpdateInterval: 100 * time.Millisecond,
 		})
@@ -370,7 +370,7 @@ func TestEngineConcurrentAccess(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -426,7 +426,7 @@ func TestEngineStoppedOnConvergence(t *testing.T) {
 		Threads:       2,
 		Timeout:       30 * time.Second,
 		TestDuration:  20 * time.Second,
-		CVThreshold:   0.5, // High threshold to encourage convergence
+		RSEThreshold:   0.5, // High threshold to encourage convergence
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -452,5 +452,26 @@ func TestBenchEngineNoDataIsError(t *testing.T) {
 	eng := NewBenchEngine(Config{URL: "http://" + addr + "/data", Threads: 2, TestDuration: 300 * time.Millisecond})
 	if _, err := eng.Run(context.Background()); err == nil {
 		t.Fatal("expected an error when no bytes were transferred")
+	}
+}
+
+// TestEngineRejectedUploadNotCounted checks bytes of a 403'd upload are taken back.
+func TestEngineRejectedUploadNotCounted(t *testing.T) {
+	listener, _ := net.Listen("tcp", "127.0.0.1:0")
+	mux := http.NewServeMux()
+	mux.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.WriteHeader(http.StatusForbidden)
+	})
+	go http.Serve(listener, mux)
+	defer listener.Close()
+
+	engine := NewEngine(Config{URL: "http://" + listener.Addr().String() + "/upload", Threads: 2, TestDuration: 500 * time.Millisecond})
+	result, _ := engine.Run(context.Background())
+	if result.BytesUploaded != 0 || result.FinalMbps != 0 {
+		t.Fatalf("403 upload counted: bytes=%d mbps=%.3f", result.BytesUploaded, result.FinalMbps)
+	}
+	if result.Errors == 0 {
+		t.Fatal("expected 403 responses to be counted as errors")
 	}
 }

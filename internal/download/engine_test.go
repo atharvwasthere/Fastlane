@@ -49,7 +49,7 @@ func TestEngineBasicDownload(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -106,7 +106,7 @@ func TestEngineMultiThreading(t *testing.T) {
 		Threads:       4,
 		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    2,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -128,7 +128,7 @@ func TestEngineConvergenceDetection(t *testing.T) {
 		Threads:       2,
 		Timeout:       15 * time.Second,
 		TestDuration:  10 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    5,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -158,7 +158,7 @@ func TestEngineStatsCalculation(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -193,7 +193,7 @@ func TestEngineCleanupOnContext(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second, // Short duration to test cleanup
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -223,7 +223,7 @@ func TestEngineGetCurrentStats(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -259,7 +259,7 @@ func TestEngineGetBytesDownloaded(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -299,12 +299,12 @@ func TestEngineDefaults(t *testing.T) {
 		t.Errorf("Expected default threads 4, got %d", engine.config.Threads)
 	}
 
-	if engine.config.CVThreshold != 0.03 {
-		t.Errorf("Expected default CVThreshold 0.03, got %f", engine.config.CVThreshold)
+	if engine.config.RSEThreshold != 0.03 {
+		t.Errorf("Expected default RSEThreshold 0.03, got %f", engine.config.RSEThreshold)
 	}
 
-	if engine.config.MinSamples != 5 {
-		t.Errorf("Expected default MinSamples 5, got %d", engine.config.MinSamples)
+	if engine.config.MinSamples != 20 {
+		t.Errorf("Expected default MinSamples 20, got %d", engine.config.MinSamples)
 	}
 }
 
@@ -318,7 +318,7 @@ func TestEngineResultFields(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  1 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -350,7 +350,7 @@ func BenchmarkEngineDownload(b *testing.B) {
 			Threads:       4,
 			Timeout:       30 * time.Second,
 			TestDuration:  2 * time.Second,
-			CVThreshold:   0.03,
+			RSEThreshold:   0.03,
 			MinSamples:    3,
 			UpdateInterval: 100 * time.Millisecond,
 		})
@@ -369,7 +369,7 @@ func TestEngineConcurrentAccess(t *testing.T) {
 		Threads:       2,
 		Timeout:       10 * time.Second,
 		TestDuration:  2 * time.Second,
-		CVThreshold:   0.03,
+		RSEThreshold:   0.03,
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -425,7 +425,7 @@ func TestEngineStoppedOnConvergence(t *testing.T) {
 		Threads:       2,
 		Timeout:       30 * time.Second,
 		TestDuration:  20 * time.Second,
-		CVThreshold:   0.5, // High threshold to encourage convergence
+		RSEThreshold:   0.5, // High threshold to encourage convergence
 		MinSamples:    3,
 		UpdateInterval: 100 * time.Millisecond,
 	})
@@ -467,8 +467,8 @@ func TestEngineErrorStatusNotCounted(t *testing.T) {
 
 	engine := NewEngine(Config{URL: "http://" + listener.Addr().String() + "/data", Threads: 2, TestDuration: 300 * time.Millisecond})
 	result, _ := engine.Run(context.Background())
-	if result.BytesDownloaded != 0 || result.SamplesCollected != 0 {
-		t.Fatalf("403 counted as data: bytes=%d samples=%d", result.BytesDownloaded, result.SamplesCollected)
+	if result.BytesDownloaded != 0 || result.FinalMbps != 0 {
+		t.Fatalf("403 counted as data: bytes=%d mbps=%.3f", result.BytesDownloaded, result.FinalMbps)
 	}
 	if result.Errors == 0 {
 		t.Fatal("expected 403 responses to be counted as errors")

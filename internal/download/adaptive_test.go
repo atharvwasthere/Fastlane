@@ -38,7 +38,7 @@ func TestAdaptive_RunsSweepAndFinalRun(t *testing.T) {
 
 	cfg := DefaultAdaptive(Config{
 		URL:            srv.URL,
-		CVThreshold:    0.5, // loose so probes finish quickly
+		RSEThreshold:    0.5, // loose so probes finish quickly
 		UpdateInterval: 50 * time.Millisecond,
 		MinSamples:     2,
 	})

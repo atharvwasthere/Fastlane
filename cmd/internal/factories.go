@@ -47,9 +47,6 @@ func DownloadEngine(p DownloadParams) bench.Engine {
 		Threads:        p.Threads,
 		Timeout:        p.Timeout,
 		TestDuration:   p.TestDuration,
-		CVThreshold:    0.03,
-		UpdateInterval: 100 * time.Millisecond,
-		MinSamples:     5,
 	}
 	if p.Adaptive {
 		return download.NewAdaptiveBenchEngine(download.DefaultAdaptive(base))
@@ -70,10 +67,6 @@ func UploadEngine(p UploadParams) bench.Engine {
 		Threads:        p.Threads,
 		Timeout:        p.Timeout,
 		TestDuration:   p.TestDuration,
-		CVThreshold:    0.03,
-		UpdateInterval: 100 * time.Millisecond,
-		MinSamples:     5,
-		ChunkSize:      1024 * 1024,
 	})
 }
 
