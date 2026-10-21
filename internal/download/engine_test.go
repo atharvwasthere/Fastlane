@@ -81,8 +81,11 @@ func TestEngineMultiThreading(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/concurrent", func(w http.ResponseWriter, r *http.Request) {
 		current := atomic.AddInt32(&activeConnections, 1)
-		if current > peakConnections {
-			atomic.StoreInt32(&peakConnections, current)
+		for {
+			peak := atomic.LoadInt32(&peakConnections)
+			if current <= peak || atomic.CompareAndSwapInt32(&peakConnections, peak, current) {
+				break
+			}
 		}
 		defer atomic.AddInt32(&activeConnections, -1)
 
@@ -110,8 +113,8 @@ func TestEngineMultiThreading(t *testing.T) {
 
 	_, _ = engine.Run(context.Background())
 
-	if peakConnections < 2 {
-		t.Logf("Expected at least 2 concurrent connections, got %d", peakConnections)
+	if peak := atomic.LoadInt32(&peakConnections); peak < 2 {
+		t.Logf("Expected at least 2 concurrent connections, got %d", peak)
 	}
 }
 

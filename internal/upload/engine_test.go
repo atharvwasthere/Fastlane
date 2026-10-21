@@ -3,6 +3,7 @@ package upload
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"sync"
@@ -20,7 +21,8 @@ func startMockServer(size int64) (string, func()) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
-		// Send fixed amount of data
+		// An unread request body makes net/http linger in closeWriteAndWait, which goleak flags.
+		_, _ = io.Copy(io.Discard, r.Body)
 		data := make([]byte, 1024)
 		for i := int64(0); i < size; i += 1024 {
 			w.Write(data)
@@ -38,6 +40,8 @@ func TestEngineBasicUpload(t *testing.T) {
 		goleak.IgnoreTopFunction("net/http.(*Server).Serve"),
 		goleak.IgnoreTopFunction("internal/poll.runtime_pollWait"),
 	)
+	// Workers use http.DefaultTransport, whose pooled keep-alive conns outlive Run.
+	defer http.DefaultTransport.(*http.Transport).CloseIdleConnections()
 	url, cleanup := startMockServer(1024 * 1024) // 1MB
 	defer cleanup()
 
@@ -78,8 +82,11 @@ func TestEngineMultiThreading(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/concurrent", func(w http.ResponseWriter, r *http.Request) {
 		current := atomic.AddInt32(&activeConnections, 1)
-		if current > peakConnections {
-			atomic.StoreInt32(&peakConnections, current)
+		for {
+			peak := atomic.LoadInt32(&peakConnections)
+			if current <= peak || atomic.CompareAndSwapInt32(&peakConnections, peak, current) {
+				break
+			}
 		}
 		defer atomic.AddInt32(&activeConnections, -1)
 
@@ -107,8 +114,8 @@ func TestEngineMultiThreading(t *testing.T) {
 
 	_, _ = engine.Run(context.Background())
 
-	if peakConnections < 2 {
-		t.Logf("Expected at least 2 concurrent connections, got %d", peakConnections)
+	if peak := atomic.LoadInt32(&peakConnections); peak < 2 {
+		t.Logf("Expected at least 2 concurrent connections, got %d", peak)
 	}
 }
 
