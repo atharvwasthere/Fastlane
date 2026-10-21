@@ -8,8 +8,7 @@ import (
 	"golang.org/x/term"
 )
 
-// SelectFormat picks the renderer Format based on global flags. Today the
-// JSON flag wins; future surfaces (--prometheus) plug in here.
+// SelectFormat picks the renderer Format based on global flags: --json or the card.
 func SelectFormat(flags config.GlobalFlags) render.Format {
 	if flags.JSON {
 		return render.FormatJSON

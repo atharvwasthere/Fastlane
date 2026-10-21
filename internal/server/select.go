@@ -138,3 +138,13 @@ func writeSelectionCache(s *Server) error {
 	}
 	return os.WriteFile(path, data, 0o644)
 }
+
+// SortByLatency sorts servers by latency (ascending), reachable ones first.
+func SortByLatency(servers []*ServerWithMetrics) {
+	sort.Slice(servers, func(i, j int) bool {
+		if servers[i].Available != servers[j].Available {
+			return servers[i].Available
+		}
+		return servers[i].LatencyMS < servers[j].LatencyMS
+	})
+}

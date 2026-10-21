@@ -81,7 +81,7 @@ func awaitColo(ch <-chan string) string {
 	}
 }
 
-// RunBench is the canonical run loop. For static renderers (json, prom) it
+// RunBench is the canonical run loop. For static renderers (json) it
 // runs the engine to completion and routes the Result to the renderer. For
 // the card renderer with a bench.LiveEngine, it spawns a bubbletea program
 // that pumps Snapshot() at a fixed cadence — replacing the raw-ANSI cursor
