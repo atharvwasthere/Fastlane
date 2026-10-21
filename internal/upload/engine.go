@@ -3,6 +3,7 @@ package upload
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"io"
 	"math/rand"
 	"net/http"
@@ -149,9 +150,16 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 // worker uploads data to URL
 func (e *Engine) worker(ctx context.Context, threadID int) {
+	// Own HTTP/1.1 transport per worker: an h2 server would otherwise multiplex every worker onto one TCP connection.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Protocols = new(http.Protocols)
+	transport.Protocols.SetHTTP1(true)
+	transport.TLSClientConfig = &tls.Config{NextProtos: []string{"http/1.1"}} // without ALPN some servers assume h2
+	defer transport.CloseIdleConnections()
 	// Use per-request timeout that's reasonable for uploads
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Transport: transport,
+		Timeout:   10 * time.Second,
 	}
 
 	// Pre-allocate one random buffer per worker, reuse across requests.
