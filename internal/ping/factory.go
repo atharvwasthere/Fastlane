@@ -34,15 +34,7 @@ type benchEngine struct {
 func (e *benchEngine) Run(ctx context.Context) (bench.Result, error) {
 	started := time.Now()
 
-	// MeasureLayered is synchronous and does its own timing internally. We
-	// honor ctx by returning early if it's already cancelled before each
-	// phase; the existing function does not accept ctx, so this is a
-	// best-effort gate until ping.MeasureLayered grows ctx support.
-	if err := ctx.Err(); err != nil {
-		return bench.Result{}, err
-	}
-
-	raw, err := MeasureLayered(e.cfg.Host, e.cfg.Iterations, e.cfg.Timeout)
+	raw, err := MeasureLayered(ctx, e.cfg.Host, e.cfg.Iterations, e.cfg.Timeout)
 	if err != nil {
 		return bench.Result{}, err
 	}
