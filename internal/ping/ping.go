@@ -46,7 +46,7 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 		start := time.Now()
 		_, err := net.LookupIP(host)
 		if err == nil {
-			dnsSamples = append(dnsSamples, float64(time.Since(start).Milliseconds()))
+			dnsSamples = append(dnsSamples, sinceMS(start))
 		} else {
 			result.Errors++
 		}
@@ -61,7 +61,7 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 		start := time.Now()
 		conn, err := net.DialTimeout("tcp", host+":80", timeout)
 		if err == nil {
-			tcpSamples = append(tcpSamples, float64(time.Since(start).Milliseconds()))
+			tcpSamples = append(tcpSamples, sinceMS(start))
 			conn.Close()
 		} else {
 			result.Errors++
@@ -82,7 +82,7 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 			&tls.Config{InsecureSkipVerify: true},
 		)
 		if err == nil {
-			tlsSamples = append(tlsSamples, float64(time.Since(start).Milliseconds()))
+			tlsSamples = append(tlsSamples, sinceMS(start))
 			conn.Close()
 		} else {
 			result.Errors++
@@ -99,7 +99,7 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 		start := time.Now()
 		resp, err := client.Get("http://" + host)
 		if err == nil {
-			httpSamples = append(httpSamples, float64(time.Since(start).Milliseconds()))
+			httpSamples = append(httpSamples, sinceMS(start))
 			resp.Body.Close()
 		} else {
 			result.Errors++
@@ -109,8 +109,7 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 		result.HTTPLatencyMS = average(httpSamples)
 	}
 
-	// Collect all samples for overall statistics
-	result.Samples = append(result.Samples, dnsSamples...)
+	// Latency and jitter come from TCP connect only; DNS time is resolver cost, not path RTT.
 	result.Samples = append(result.Samples, tcpSamples...)
 
 	if len(result.Samples) == 0 {
@@ -123,6 +122,11 @@ func MeasureLayered(host string, iterations int, timeout time.Duration) (*Latenc
 	result.TotalLatencyMS = result.MeanMS
 
 	return result, nil
+}
+
+// sinceMS keeps sub-millisecond precision that Duration.Milliseconds() truncates.
+func sinceMS(start time.Time) float64 {
+	return float64(time.Since(start)) / float64(time.Millisecond)
 }
 
 // helper functions
