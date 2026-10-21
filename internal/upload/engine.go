@@ -155,7 +155,7 @@ func (e *Engine) worker(ctx context.Context, threadID int) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		io.Copy(io.Discard, resp.Body)
+		_, _ = io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 
 		// A rejected upload is not throughput; take back the bytes this request counted.

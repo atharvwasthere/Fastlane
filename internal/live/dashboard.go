@@ -40,17 +40,6 @@ var (
 
 const barRune = '━'
 
-// metric describes one row in the dashboard. Direction governs verdict color
-// (higher-better vs lower-better); Scale is the value at which the bar reaches
-// 100% width (auto-grows if a sample exceeds it).
-type metric struct {
-	label string
-	unit  string
-	color lipgloss.AdaptiveColor
-	scale float64 // soft cap for bar normalization; grows if exceeded
-	lower bool    // true = lower is better (latency, loss)
-}
-
 // model is the bubbletea state for the cycling live dashboard. Keeps minimal
 // state — the runner pushes Stats, the renderer maps them to bars.
 type model struct {

@@ -25,11 +25,11 @@ func startMockServer(size int64) (string, func()) {
 		_, _ = io.Copy(io.Discard, r.Body)
 		data := make([]byte, 1024)
 		for i := int64(0); i < size; i += 1024 {
-			w.Write(data)
+			_, _ = w.Write(data)
 		}
 	})
 
-	go http.Serve(listener, mux)
+	go func() { _ = http.Serve(listener, mux) }()
 
 	return "http://" + addr + "/data", func() { listener.Close() }
 }
@@ -91,14 +91,14 @@ func TestEngineMultiThreading(t *testing.T) {
 
 		// Send 100KB
 		for i := 0; i < 100; i++ {
-			w.Write(make([]byte, 1024))
+			_, _ = w.Write(make([]byte, 1024))
 		}
 	})
 
 	listener, _ := net.Listen("tcp", "127.0.0.1:0")
 	defer listener.Close()
 
-	go http.Serve(listener, mux)
+	go func() { _ = http.Serve(listener, mux) }()
 	url := "http://" + listener.Addr().String() + "/concurrent"
 
 	engine := NewEngine(Config{
@@ -197,7 +197,7 @@ func TestEngineCleanupOnContext(t *testing.T) {
 	// Run should complete without hanging
 	done := make(chan bool)
 	go func() {
-		engine.Run(context.Background())
+		_, _ = engine.Run(context.Background())
 		done <- true
 	}()
 
@@ -241,7 +241,7 @@ func TestEngineGetCurrentStats(t *testing.T) {
 	}
 
 	// Wait for completion
-	_ = <-done
+	<-done
 }
 
 // TestEngineGetBytesUploaded tests byte counting
@@ -347,7 +347,7 @@ func BenchmarkEngineUpload(b *testing.B) {
 			UpdateInterval: 100 * time.Millisecond,
 		})
 
-		engine.Run(context.Background())
+		_, _ = engine.Run(context.Background())
 	}
 }
 
@@ -452,7 +452,7 @@ func TestEngineRejectedUploadNotCounted(t *testing.T) {
 		_, _ = io.Copy(io.Discard, r.Body)
 		w.WriteHeader(http.StatusForbidden)
 	})
-	go http.Serve(listener, mux)
+	go func() { _ = http.Serve(listener, mux) }()
 	defer listener.Close()
 
 	// Small bodies so many requests complete and get rejected inside the run.

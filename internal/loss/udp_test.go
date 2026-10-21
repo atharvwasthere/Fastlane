@@ -38,7 +38,7 @@ func startMockUDPServer(t *testing.T, port int, dropRate float64) *net.UDPConn {
 			}
 
 			// Echo back
-			conn.WriteToUDP(buffer[:n], remoteAddr)
+			_, _ = conn.WriteToUDP(buffer[:n], remoteAddr)
 		}
 	}()
 
@@ -342,7 +342,7 @@ func TestEngineDuplicateEchoes(t *testing.T) {
 				return
 			}
 			for i := 0; i < 3; i++ { // 3x the expected echoes overflowed the old Count-sized channel
-				conn.WriteToUDP(buf[:n], from)
+				_, _ = conn.WriteToUDP(buf[:n], from)
 			}
 		}
 	}()
