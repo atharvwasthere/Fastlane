@@ -51,7 +51,7 @@ Exit codes (with --ci):
 			}
 		}
 
-		dlURL := fmt.Sprintf("https://%s/__down?bytes=104857600", host)
+		dlURL := fmt.Sprintf("https://%s%s", host, cmdint.DownloadPath)
 		upURL := fmt.Sprintf("https://%s/__up", host)
 
 		testDuration := time.Duration(globalFlags.Timeout) * time.Second

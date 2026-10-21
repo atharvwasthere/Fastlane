@@ -185,6 +185,14 @@ func (e *Engine) worker(ctx context.Context, threadID int) {
 			continue
 		}
 
+		// An error page (e.g. 403) is not throughput; count it as a failure.
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			resp.Body.Close()
+			atomic.AddInt64(&e.errCount, 1)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
 		// Read to /dev/null with byte counting
 		n, _ := io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()

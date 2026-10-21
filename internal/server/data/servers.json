@@ -12,7 +12,7 @@
       "latitude": 0.0,
       "longitude": 0.0,
       "port": 443,
-      "download_path": "/__down?bytes=104857600",
+      "download_path": "/__down?bytes=50000000",
       "upload_path": "/__up"
     },
     {

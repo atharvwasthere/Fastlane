@@ -453,3 +453,24 @@ func TestBenchEngineNoDataIsError(t *testing.T) {
 		t.Fatal("expected an error when no bytes were transferred")
 	}
 }
+
+// TestEngineErrorStatusNotCounted checks a 403 body is an error, not a throughput sample.
+func TestEngineErrorStatusNotCounted(t *testing.T) {
+	listener, _ := net.Listen("tcp", "127.0.0.1:0")
+	mux := http.NewServeMux()
+	mux.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("0"))
+	})
+	go http.Serve(listener, mux)
+	defer listener.Close()
+
+	engine := NewEngine(Config{URL: "http://" + listener.Addr().String() + "/data", Threads: 2, TestDuration: 300 * time.Millisecond})
+	result, _ := engine.Run(context.Background())
+	if result.BytesDownloaded != 0 || result.SamplesCollected != 0 {
+		t.Fatalf("403 counted as data: bytes=%d samples=%d", result.BytesDownloaded, result.SamplesCollected)
+	}
+	if result.Errors == 0 {
+		t.Fatal("expected 403 responses to be counted as errors")
+	}
+}

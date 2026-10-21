@@ -28,9 +28,9 @@ var downloadCmd = &cobra.Command{
 		case server != "":
 			// explicit --server wins
 		case downloadFlags.AutoServer:
-			server = cmdint.AutoServerURL(ctx, "download", "https://speed.cloudflare.com/__down?bytes=104857600")
+			server = cmdint.AutoServerURL(ctx, "download", "https://speed.cloudflare.com"+cmdint.DownloadPath)
 		default:
-			server = "https://speed.cloudflare.com/__down?bytes=104857600"
+			server = "https://speed.cloudflare.com"+cmdint.DownloadPath
 		}
 
 		testDuration := time.Duration(globalFlags.Timeout) * time.Second

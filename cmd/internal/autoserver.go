@@ -9,6 +9,9 @@ import (
 	"github.com/atharvwasthere/Fastlane/internal/server"
 )
 
+// DownloadPath is the Cloudflare download path. __down returns 403 for bytes >= 100,000,000.
+const DownloadPath = "/__down?bytes=50000000"
+
 // AutoServerURL runs server.AutoSelect and returns a URL suitable for the
 // named command kind. Per-server `download_path` / `upload_path` come from
 // the embedded servers.json; if a server lacks the path for the requested
@@ -29,7 +32,7 @@ func AutoServerURL(ctx context.Context, kind, fallback string) string {
 	fmt.Fprintf(os.Stderr, "auto-server: selected %s (%s, %s)\n", s.Name, s.Location, s.Country)
 	switch kind {
 	case "download":
-		return buildURL(s.Host, s.Port, pickPath(s.DownloadPath, "/__down?bytes=104857600"))
+		return buildURL(s.Host, s.Port, pickPath(s.DownloadPath, DownloadPath))
 	case "upload":
 		return buildURL(s.Host, s.Port, pickPath(s.UploadPath, "/__up"))
 	case "ping":
