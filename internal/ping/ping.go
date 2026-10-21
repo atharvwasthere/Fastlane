@@ -8,24 +8,27 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 )
 
-// LatencyResult holds latency measurements for each layer
+// LatencyResult holds latency measurements for each layer. Latency is
+// right-skewed (a hard floor, a long queueing tail), so layers report the
+// median and jitter is the mean change between consecutive probes; mean and
+// standard deviation would both be dragged by the tail.
 type LatencyResult struct {
-	DNSLatencyMS   float64
-	TCPLatencyMS   float64
-	TLSLatencyMS   float64
-	HTTPLatencyMS  float64 // time to first byte: request written → first response byte
-	TotalLatencyMS float64
-	JitterMS       float64
-	MinMS          float64
-	MaxMS          float64
-	MeanMS         float64
-	Samples        []float64 // TCP connect times; latency and jitter come from these
-	Errors         int64     // probes that failed at any layer
+	DNSLatencyMS  float64
+	TCPLatencyMS  float64
+	TLSLatencyMS  float64
+	HTTPLatencyMS float64 // time to first byte: request written → first response byte
+	MedianMS      float64 // headline latency: median TCP connect
+	JitterMS      float64 // mean |difference| between consecutive TCP connects
+	MinMS         float64 // path floor
+	MaxMS         float64
+	Samples       []float64 // TCP connect times in probe order
+	Errors        int64     // probes that failed at any layer
 }
 
 // MeasureLayered sends iterations requests, each on a fresh connection, and
@@ -78,15 +81,14 @@ func MeasureLayered(ctx context.Context, host string, iterations int, timeout ti
 	if len(result.Samples) == 0 {
 		return result, fmt.Errorf("ping %s: no successful probes (%d errors)", host, result.Errors)
 	}
-	result.DNSLatencyMS = average(dnsS)
-	result.TCPLatencyMS = average(result.Samples)
-	result.TLSLatencyMS = average(tlsS)
-	result.HTTPLatencyMS = average(ttfbS)
-	result.MeanMS = result.TCPLatencyMS
+	result.DNSLatencyMS = median(dnsS)
+	result.TCPLatencyMS = median(result.Samples)
+	result.TLSLatencyMS = median(tlsS)
+	result.HTTPLatencyMS = median(ttfbS)
+	result.MedianMS = result.TCPLatencyMS
 	result.MinMS = minimum(result.Samples)
 	result.MaxMS = maximum(result.Samples)
-	result.JitterMS = stddev(result.Samples)
-	result.TotalLatencyMS = result.MeanMS
+	result.JitterMS = meanAbsDiff(result.Samples)
 
 	return result, nil
 }
@@ -161,15 +163,17 @@ func sinceMS(start time.Time) float64 {
 }
 
 // helper functions
-func average(vals []float64) float64 {
+func median(vals []float64) float64 {
 	if len(vals) == 0 {
 		return 0
 	}
-	sum := 0.0
-	for _, v := range vals {
-		sum += v
+	sorted := slices.Clone(vals)
+	slices.Sort(sorted)
+	mid := len(sorted) / 2
+	if len(sorted)%2 == 1 {
+		return sorted[mid]
 	}
-	return sum / float64(len(vals))
+	return (sorted[mid-1] + sorted[mid]) / 2
 }
 
 func minimum(vals []float64) float64 {
@@ -198,16 +202,15 @@ func maximum(vals []float64) float64 {
 	return max
 }
 
-func stddev(vals []float64) float64 {
+// meanAbsDiff is the average change between consecutive samples. Unlike a
+// standard deviation it assumes no distribution shape.
+func meanAbsDiff(vals []float64) float64 {
 	if len(vals) < 2 {
 		return 0
 	}
-	mean := average(vals)
-	sumSq := 0.0
-	for _, v := range vals {
-		diff := v - mean
-		sumSq += diff * diff
+	sum := 0.0
+	for i := 1; i < len(vals); i++ {
+		sum += math.Abs(vals[i] - vals[i-1])
 	}
-	variance := sumSq / float64(len(vals)-1)
-	return math.Sqrt(variance)
+	return sum / float64(len(vals)-1)
 }

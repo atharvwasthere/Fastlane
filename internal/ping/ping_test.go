@@ -12,7 +12,7 @@ func TestMeasureLayeredUnreachableIsError(t *testing.T) {
 	// .invalid never resolves (RFC 2606), so every layer fails.
 	res, err := MeasureLayered(context.Background(), "no-such-host.invalid", 1, time.Second)
 	if err == nil {
-		t.Fatalf("expected an error, got mean %.2f ms", res.MeanMS)
+		t.Fatalf("expected an error, got median %.2f ms", res.MedianMS)
 	}
 }
 
@@ -38,8 +38,8 @@ func TestMeasureLayeredSeparatesLayers(t *testing.T) {
 	if res.TLSLatencyMS != 0 || res.DNSLatencyMS != 0 {
 		t.Fatalf("plain-HTTP IP target has no TLS or DNS, got tls=%.2f dns=%.2f", res.TLSLatencyMS, res.DNSLatencyMS)
 	}
-	if res.MeanMS != res.TCPLatencyMS {
-		t.Fatalf("latency must be the TCP connect mean: mean=%.2f tcp=%.2f", res.MeanMS, res.TCPLatencyMS)
+	if res.MedianMS != res.TCPLatencyMS {
+		t.Fatalf("latency must be the TCP connect median: median=%.2f tcp=%.2f", res.MedianMS, res.TCPLatencyMS)
 	}
 }
 
@@ -74,5 +74,22 @@ func TestTargetURL(t *testing.T) {
 		if err != nil || got != want {
 			t.Errorf("targetURL(%q) = %q, %v; want %q", in, got, err, want)
 		}
+	}
+}
+
+func TestRobustStatsOnSkewedLatency(t *testing.T) {
+	// One queueing spike: the mean would read 57.2 ms, the median stays on the typical 22 ms.
+	samples := []float64{20, 21, 22, 23, 200}
+	if got := median(samples); got != 22 {
+		t.Fatalf("median = %.1f, want 22", got)
+	}
+	if got := median([]float64{30, 10, 20, 40}); got != 25 {
+		t.Fatalf("even-length median = %.1f, want 25", got)
+	}
+	if got := meanAbsDiff(samples); got != 45 {
+		t.Fatalf("meanAbsDiff = %.1f, want 45 ((1+1+1+177)/4)", got)
+	}
+	if samples[4] != 200 {
+		t.Fatal("median must not reorder the caller's samples")
 	}
 }

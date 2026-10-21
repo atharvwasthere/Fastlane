@@ -2,12 +2,12 @@
 │                        │
 │  ✓ Connection is       │
 │  healthy               │
-│  22 ms average ·       │
+│  22 ms median ·        │
 │  jitter 3.0 ms · 10    │
 │  samples               │
 │                        │
 │  22ms                  │
-│  AVG LATENCY           │
+│  MEDIAN LATENCY        │
 │                        │
 │  51ms                  │
 │  WORST CASE            │

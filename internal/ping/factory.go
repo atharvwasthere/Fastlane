@@ -15,8 +15,7 @@ type BenchConfig struct {
 }
 
 // NewBenchEngine returns a bench.Engine that runs MeasureLayered and packs the
-// output into a bench.Result. The Pauta filter only counts outliers; the
-// reported stats use the raw samples.
+// output into a bench.Result.
 func NewBenchEngine(cfg BenchConfig) bench.Engine {
 	if cfg.Iterations <= 0 {
 		cfg.Iterations = 5
@@ -39,11 +38,8 @@ func (e *benchEngine) Run(ctx context.Context) (bench.Result, error) {
 		return bench.Result{}, err
 	}
 
-	filter := NewPautaFilter()
-	filtered, removed := filter.Filter(raw.Samples)
-
 	r := bench.NewResult(bench.KindPing, e.cfg.Host, started, time.Since(started))
-	r.Metrics["latency_ms"] = raw.MeanMS
+	r.Metrics["latency_ms"] = raw.MedianMS
 	r.Metrics["jitter_ms"] = raw.JitterMS
 	r.Metrics["min_ms"] = raw.MinMS
 	r.Metrics["max_ms"] = raw.MaxMS
@@ -51,10 +47,9 @@ func (e *benchEngine) Run(ctx context.Context) (bench.Result, error) {
 	r.Layers["tcp_ms"] = raw.TCPLatencyMS
 	r.Layers["tls_ms"] = raw.TLSLatencyMS
 	r.Layers["http_ms"] = raw.HTTPLatencyMS
-	r.Counters["samples"] = int64(len(filtered))
-	r.Counters["outliers_removed"] = int64(removed)
+	r.Counters["samples"] = int64(len(raw.Samples))
 	r.Counters["errors"] = raw.Errors
-	if raw.Errors > int64(len(filtered)) {
+	if raw.Errors > int64(len(raw.Samples)) {
 		r.Flags["degraded"] = true
 	}
 	return r, nil
