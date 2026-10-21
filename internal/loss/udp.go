@@ -31,7 +31,7 @@ type Mode string
 
 const (
 	ModeHTTP Mode = "http" // HEAD requests over HTTP/HTTPS (default, public-internet safe)
-	ModeUDP  Mode = "udp"  // UDP echo/discard (LAN-only, requires controlled receiver)
+	ModeUDP  Mode = "udp"  // UDP echo (LAN-only, requires controlled receiver)
 	ModeICMP Mode = "icmp" // reserved — not implemented yet
 )
 
@@ -40,7 +40,7 @@ const (
 type Config struct {
 	Mode         Mode          // "http" (default) | "udp" | "icmp" (TODO)
 	Host         string        // Target host or URL
-	Port         int           // UDP port (default 9 when Mode=udp)
+	Port         int           // UDP port (default 7, echo, when Mode=udp)
 	Count        int           // Number of probes to send (default 100)
 	PacketSize   int           // UDP packet size (default 32 bytes)
 	Rate         int           // Probes per second (default 10)
@@ -68,7 +68,7 @@ type UDPEngine struct {
 // NewEngine creates a new loss test engine
 func NewUDPEngine(config Config) *UDPEngine {
 	if config.Port == 0 {
-		config.Port = 9 // Discard protocol (standard for testing)
+		config.Port = 7 // Echo (RFC 862); port 9 is Discard and never replies
 	}
 	if config.Count == 0 {
 		config.Count = 100

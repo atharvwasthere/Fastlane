@@ -162,8 +162,8 @@ func TestEngineDefaults(t *testing.T) {
 
 	engine := NewUDPEngine(config)
 
-	if engine.config.Port != 9 {
-		t.Errorf("Expected default port 9, got %d", engine.config.Port)
+	if engine.config.Port != 7 {
+		t.Errorf("Expected default port 7, got %d", engine.config.Port)
 	}
 
 	if engine.config.Count != 100 {
